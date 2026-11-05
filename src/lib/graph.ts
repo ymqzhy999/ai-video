@@ -363,11 +363,13 @@ export function normalizeNode(raw: unknown, index: number): StudioNode | null {
   const definition = defType === 'group' ? GROUP_DEFINITION : getNodeDefinition(defType);
   const position = candidate.position;
   if (!position || typeof position.x !== 'number' || typeof position.y !== 'number') return null;
+  const rawParams =
+    candidate.data?.params && typeof candidate.data.params === 'object'
+      ? deepClone(candidate.data.params)
+      : {};
   const params = {
     ...deepClone(definition.defaults),
-    ...(candidate.data?.params && typeof candidate.data.params === 'object'
-      ? deepClone(candidate.data.params)
-      : {}),
+    ...rawParams,
   };
   // Migrate the old portrait Snap size (768×1024) to the requested export
   // size. The API still receives a near-2:3 request and the result is resized
@@ -379,6 +381,12 @@ export function normalizeNode(raw: unknown, index: number): StudioNode | null {
   ) {
     params.width = 1024;
     params.height = 1536;
+  }
+  if (defType === 'agnes-image' && !Object.prototype.hasOwnProperty.call(rawParams, 'sizePreset')) {
+    const presetKey = `${params.width}x${params.height}`;
+    params.sizePreset = ['1024x1536', '1024x768', '1536x1024', '1024x1024'].includes(presetKey)
+      ? presetKey
+      : 'custom';
   }
   return {
     id: String(candidate.id ?? uid(`node${index}`)),

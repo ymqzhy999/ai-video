@@ -76,6 +76,7 @@ const SAMPLE_NODES: StudioNode[] = [
     {
       width: 1024,
       height: 1536,
+      sizePreset: '1024x1536',
       count: 1,
       seed: 20260214,
       prompt:
@@ -156,6 +157,7 @@ const IMG2IMG_NODES: StudioNode[] = [
     negativePrompt: 'digital look, oversharpened, plastic skin, watermark',
     width: 1024,
     height: 768,
+    sizePreset: '1024x768',
     count: 1,
     seed: 771209,
   }),

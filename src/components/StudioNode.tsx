@@ -47,7 +47,7 @@ function paramSummary(node: StudioNode): string[] {
     }
     case 'agnes-image':
       return [
-        `${params.width ?? 1024} × ${params.height ?? 1024}`,
+        `宽 ${params.width ?? 1024} · 高 ${params.height ?? 1536}`,
         `×${params.count ?? 1}`,
         `seed ${String(params.seed ?? 0).slice(-6)}`,
       ];

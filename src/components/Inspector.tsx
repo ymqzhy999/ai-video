@@ -310,7 +310,7 @@ function NodeParamsPanel({ node }: { node: StudioNode }) {
             <div>
               <dt>本地导出尺寸</dt>
               <dd>
-                {Number(node.data.params.width)} × {Number(node.data.params.height)}
+                宽 {Number(node.data.params.width)} × 高 {Number(node.data.params.height)}
               </dd>
             </div>
             <div>

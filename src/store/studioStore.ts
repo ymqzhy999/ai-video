@@ -991,6 +991,16 @@ export const useStudioStore = create<StudioStore>((set, get) => ({
       const [width, height] = patch.preset.split('x').map(Number);
       if (width && height) nextParams = { ...nextParams, width, height };
     }
+    if (node.data.defType === 'agnes-image') {
+      if (typeof patch.sizePreset === 'string') {
+        if (patch.sizePreset !== 'custom') {
+          const [width, height] = patch.sizePreset.split('x').map(Number);
+          if (width && height) nextParams = { ...nextParams, width, height };
+        }
+      } else if ('width' in patch || 'height' in patch) {
+        nextParams = { ...nextParams, sizePreset: 'custom' };
+      }
+    }
     const nextNodes = state.nodes.map((candidate) =>
       candidate.id === id
         ? {

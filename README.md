@@ -11,7 +11,7 @@
 - **Debug APK**：[releases/ComfyUI-Studio-debug.apk](releases/ComfyUI-Studio-debug.apk)
 - SHA-256：[releases/ComfyUI-Studio-debug.apk.sha256](releases/ComfyUI-Studio-debug.apk.sha256)
 - 支持 Android 7.0+（minSdk 24），debug 签名，仅用于个人学习和测试，不能直接上架应用商店。
-- 当前测试包：**v1.1（versionCode 2）**。Agnes 导出图片会校准为节点填写的宽高，默认 **1024×1536**。
+- 当前测试包：**v1.2（versionCode 3）**。Agnes 节点支持尺寸预设和自定义宽高，导出图片会严格校准为节点填写的 **宽 × 高**，默认 **宽 1024 × 高 1536**。
 - APK 由 [GitHub Actions](.github/workflows/build-android.yml) 在每次 main 分支构建后自动生成并提交。
 
 ## 这个 App 适合学什么
