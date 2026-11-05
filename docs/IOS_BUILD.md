@@ -2,6 +2,20 @@
 
 仓库内的 `ios/` 已经是可直接打开的 Capacitor Xcode 工程。Web 产物会从 `dist/` 复制到 `ios/App/App/public/`。
 
+## 直接下载未签名 IPA
+
+- [ComfyUI-Studio-unsigned.ipa](../releases/ComfyUI-Studio-unsigned.ipa)
+- [SHA-256 校验文件](../releases/ComfyUI-Studio-unsigned.ipa.sha256)
+- [未签名说明](../releases/IOS-UNSIGNED-README.txt)
+
+这是由 GitHub Actions 的 macOS runner 构建的**未签名** iOS 包（iOS 15.0+，arm64）。它不能直接双击安装，也不能上传到 TestFlight。需要先用自己的 Apple ID / 开发者证书签名，例如：
+
+- 用 Xcode 打开 `ios/App/App.xcodeproj`，选择自己的 Team 后 Run；
+- 或在 Windows / macOS 上用 Sideloadly、AltStore 等工具配合 Apple ID 重签；
+- 免费的 Apple ID 签名通常 7 天需要重新签名。
+
+没有用户自己的 Apple 开发者签名材料，任何人都无法生成可直接安装到 iPhone 的成品 IPA。这是 Apple 的签名机制，不是工程缺少文件。
+
 ## 环境要求
 
 - macOS
