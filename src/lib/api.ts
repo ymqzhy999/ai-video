@@ -1,5 +1,5 @@
 import type { AppSettings, ImageAsset } from '../types/studio';
-import { normalizeAgnesSize } from './image';
+import { normalizeAgnesSize, scaleImage } from './image';
 
 export class ApiError extends Error {
   status?: number;
@@ -225,7 +225,8 @@ export async function generateAgnesImages(
       model: settings.agnesModel || 'agnes-image-2.0-flash',
       prompt,
       size: `${size.width}x${size.height}`,
-      extra_body: { response_format: 'url' },
+      return_base64: true,
+      extra_body: { response_format: 'b64_json' },
     };
     if (reference) {
       payload.extra_body = {
@@ -290,6 +291,41 @@ export async function generateAgnesImages(
       throw new ApiError('Agnes 响应中没有可用的图像地址。');
     }
     options.onProgress?.(`第 ${index + 1}/${count} 张完成`, index + 1, count);
+  }
+
+  // Agnes may return a smaller output than requested (for example 832×1248
+  // for a 1024×1536 request). Normalize the files locally so downloads and
+  // downstream nodes always receive the dimensions configured in the node.
+  const targetWidth = Math.max(256, Math.min(2048, Math.round(options.width)));
+  const targetHeight = Math.max(256, Math.min(2048, Math.round(options.height)));
+  if (images.length) {
+    options.onProgress?.(
+      `正在调整输出尺寸至 ${targetWidth} × ${targetHeight}…`,
+      count,
+      count,
+    );
+    for (let index = 0; index < images.length; index += 1) {
+      try {
+        const resized = await scaleImage(images[index], targetWidth, targetHeight, 'cover');
+        images[index] = {
+          ...images[index],
+          ...resized,
+          alt: images[index].alt,
+          filename: images[index].filename,
+          revisedPrompt: images[index].revisedPrompt,
+          simulated: false,
+        };
+      } catch {
+        // If the upstream image is CORS-protected, keep it rather than failing
+        // the whole generation. The generated metadata still records the
+        // intended export size.
+      }
+      options.onProgress?.(
+        `输出尺寸 ${index + 1}/${images.length} 已完成`,
+        count,
+        count,
+      );
+    }
   }
   return images;
 }

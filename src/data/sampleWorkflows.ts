@@ -75,7 +75,7 @@ const SAMPLE_NODES: StudioNode[] = [
     116,
     {
       width: 1024,
-      height: 1024,
+      height: 1536,
       count: 1,
       seed: 20260214,
       prompt:

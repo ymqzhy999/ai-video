@@ -369,6 +369,17 @@ export function normalizeNode(raw: unknown, index: number): StudioNode | null {
       ? deepClone(candidate.data.params)
       : {}),
   };
+  // Migrate the old portrait Snap size (768×1024) to the requested export
+  // size. The API still receives a near-2:3 request and the result is resized
+  // locally by the execution engine.
+  if (
+    defType === 'agnes-image' &&
+    Number(params.width) === 768 &&
+    Number(params.height) === 1024
+  ) {
+    params.width = 1024;
+    params.height = 1536;
+  }
   return {
     id: String(candidate.id ?? uid(`node${index}`)),
     type: 'studio',

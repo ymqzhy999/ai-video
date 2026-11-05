@@ -25,7 +25,7 @@ import type { StudioNode } from '../types/studio';
 import { PORT_TYPES } from '../types/studio';
 import { getNodeDefinition } from '../lib/nodeRegistry';
 import { charCount, copyText, formatDateTime, formatDuration, truncate } from '../lib/format';
-import { downloadImage } from '../lib/image';
+import { downloadImage, normalizeAgnesSize } from '../lib/image';
 import { validateGraph } from '../lib/execution';
 import { hasAgnesKey, hasDeepSeekKey } from '../lib/api';
 import { focusCanvasNode } from '../lib/flowBridge';
@@ -299,13 +299,18 @@ function NodeParamsPanel({ node }: { node: StudioNode }) {
           <h3>Agnes 参数说明</h3>
           <dl className="inspector-kv">
             <div>
-              <dt>实际提交尺寸</dt>
+              <dt>API 生成比例</dt>
               <dd>
-                {Number(node.data.params.width) > Number(node.data.params.height) * 1.12
-                  ? '1024 × 768'
-                  : Number(node.data.params.width) < Number(node.data.params.height) * 0.89
-                    ? '768 × 1024'
-                    : '1024 × 1024'}
+                {normalizeAgnesSize(
+                  Number(node.data.params.width),
+                  Number(node.data.params.height),
+                ).label}
+              </dd>
+            </div>
+            <div>
+              <dt>本地导出尺寸</dt>
+              <dd>
+                {Number(node.data.params.width)} × {Number(node.data.params.height)}
               </dd>
             </div>
             <div>

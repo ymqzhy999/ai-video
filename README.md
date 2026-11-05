@@ -6,21 +6,12 @@
 
 这是一个真正可交互的节点编辑器，不是静态设计稿。项目同时包含 Web、iOS（Xcode 工程）和 Android（Android Studio 工程）。
 
-## 直接下载安装包
+## 直接下载 Android 安装包
 
 - **Debug APK**：[releases/ComfyUI-Studio-debug.apk](releases/ComfyUI-Studio-debug.apk)
 - SHA-256：[releases/ComfyUI-Studio-debug.apk.sha256](releases/ComfyUI-Studio-debug.apk.sha256)
 - 支持 Android 7.0+（minSdk 24），debug 签名，仅用于个人学习和测试，不能直接上架应用商店。
 - APK 由 [GitHub Actions](.github/workflows/build-android.yml) 在每次 main 分支构建后自动生成并提交。
-
-### iOS（未签名 IPA）
-
-- **未签名 IPA**：[releases/ComfyUI-Studio-unsigned.ipa](releases/ComfyUI-Studio-unsigned.ipa)
-- SHA-256：[releases/ComfyUI-Studio-unsigned.ipa.sha256](releases/ComfyUI-Studio-unsigned.ipa.sha256)
-- 说明：[IOS-UNSIGNED-README.txt](releases/IOS-UNSIGNED-README.txt)
-- 支持 iOS 15.0+，架构 arm64。
-- **这不是可直接安装的签名包**。iOS 必须使用你自己的 Apple ID / 开发者证书重新签名后安装，可使用 Xcode、Sideloadly 或 AltStore；免费的 Apple ID 通常 7 天需要重签一次。
-- 已签名的构建需要 Apple Developer 账号；签名的 IPA 不会提交到公开仓库。完整 Xcode 工程位于 [`ios/`](ios/)。
 
 ## 这个 App 适合学什么
 
@@ -241,7 +232,7 @@ uvicorn main:app --host 0.0.0.0 --port 8000
 
 - 本项目定位是**入门学习工具**，不是 ComfyUI 的完整替代品。
 - `KSampler` 节点用于解释采样参数和依赖结构；真实采样请使用 ComfyUI API 工作流节点并配置服务地址。
-- Agnes 官方当前支持的输出尺寸为 1024×1024、1024×768、768×1024；界面里的宽高会自动映射到最接近的受支持尺寸。
+- Agnes 会按相近比例请求生成，实际返回分辨率可能低于填写值；App 会在本地把结果校准为你填写的导出宽高（默认 1024×1536）。
 - iOS 二进制与 Android APK 不在仓库中预置，需要对应的签名工具链构建。
 - 真实模型生成依赖第三方服务；本项目只负责编辑、预检、调用与结果展示。
 

@@ -202,8 +202,9 @@ export function normalizeAgnesSize(width: number, height: number): {
   label: string;
 } {
   const ratio = width / Math.max(1, height);
-  if (ratio > 1.12) return { width: 1024, height: 768, label: '1024 × 768' };
-  if (ratio < 0.89) return { width: 768, height: 1024, label: '768 × 1024' };
+  if (ratio > 1.15) return { width: 1024, height: 768, label: '1024 × 768' };
+  if (ratio < 0.72) return { width: 1024, height: 1536, label: '1024 × 1536' };
+  if (ratio < 0.92) return { width: 768, height: 1024, label: '768 × 1024' };
   return { width: 1024, height: 1024, label: '1024 × 1024' };
 }
 
@@ -231,9 +232,8 @@ export function makeMockImage(
   seed: number,
   variant = 0,
 ): ImageAsset {
-  const ratio = width / Math.max(1, height);
-  const canvasWidth = ratio > 1.1 ? 960 : 768;
-  const canvasHeight = ratio > 1.1 ? Math.round(960 / ratio) : ratio < 0.9 ? 960 : 768;
+  const canvasWidth = Math.max(256, Math.min(2048, Math.round(width)));
+  const canvasHeight = Math.max(256, Math.min(2048, Math.round(height)));
   const canvas = document.createElement('canvas');
   canvas.width = canvasWidth;
   canvas.height = canvasHeight;
@@ -354,19 +354,42 @@ function wrapCanvasText(
 }
 
 export async function downloadImage(asset: ImageAsset, filename: string, format: string): Promise<void> {
-  const name = `${safeFilename(filename, 'comfyui-output')}.${format === 'jpeg' ? 'jpg' : format}`;
+  const extension = format === 'jpeg' ? 'jpg' : format;
+  const name = `${safeFilename(filename, 'comfyui-output')}.${extension}`;
+  const mime = format === 'jpeg' ? 'image/jpeg' : format === 'webp' ? 'image/webp' : 'image/png';
   try {
-    if (asset.src.startsWith('data:')) {
-      const response = await fetch(asset.src);
-      const blob = await response.blob();
-      downloadBlob(blob, name);
-      return;
+    const image = await loadImageElement(asset.src);
+    const width = Math.max(1, Math.round(asset.width ?? image.naturalWidth));
+    const height = Math.max(1, Math.round(asset.height ?? image.naturalHeight));
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const context = canvas.getContext('2d');
+    if (!context) throw new Error('canvas unavailable');
+    if (mime === 'image/jpeg') {
+      context.fillStyle = '#0a0c10';
+      context.fillRect(0, 0, width, height);
     }
-    const response = await fetch(asset.src, { mode: 'cors' });
-    if (!response.ok) throw new Error('download failed');
-    const blob = await response.blob();
+    context.drawImage(image, 0, 0, width, height);
+    const blob = await new Promise<Blob | null>((resolve) =>
+      canvas.toBlob(resolve, mime, format === 'png' ? undefined : 0.94),
+    );
+    if (!blob) throw new Error('image encoding failed');
     downloadBlob(blob, name);
   } catch {
-    window.open(asset.src, '_blank', 'noopener,noreferrer');
+    try {
+      if (asset.src.startsWith('data:')) {
+        const response = await fetch(asset.src);
+        const blob = await response.blob();
+        downloadBlob(blob, name);
+        return;
+      }
+      const response = await fetch(asset.src, { mode: 'cors' });
+      if (!response.ok) throw new Error('download failed');
+      const blob = await response.blob();
+      downloadBlob(blob, name);
+    } catch {
+      window.open(asset.src, '_blank', 'noopener,noreferrer');
+    }
   }
 }
