@@ -66,12 +66,31 @@ export function SettingsModal() {
   const patch = (value: Partial<AppSettings>) => setDraft((current) => ({ ...current, ...value }));
 
   const handleSave = async () => {
+    if (saving) return;
     setSaving(true);
-    updateSettings(draft);
-    await saveCurrent({ quiet: true });
-    setSaving(false);
-    toast({ type: 'success', title: '设置已保存', description: 'API Key 只保存在此设备。' });
-    closeModal();
+    try {
+      updateSettings(draft);
+      await saveCurrent({ quiet: true });
+      const state = useStudioStore.getState();
+      if (state.saveState === 'error') {
+        toast({
+          type: 'error',
+          title: '保存失败',
+          description: state.lastSaveError ?? '请检查设备存储空间后重试。',
+        });
+        return;
+      }
+      toast({ type: 'success', title: '设置已保存', description: 'API Key 只保存在此设备。' });
+      closeModal();
+    } catch (error) {
+      toast({
+        type: 'error',
+        title: '保存设置失败',
+        description: error instanceof Error ? error.message : '未知错误',
+      });
+    } finally {
+      setSaving(false);
+    }
   };
 
   const runDeepSeekTest = async () => {

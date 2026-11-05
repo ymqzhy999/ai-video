@@ -450,7 +450,15 @@ export const useStudioStore = create<StudioStore>((set, get) => ({
       lastSaveError: undefined,
     });
     const persisted = buildStateSnapshot({ ...get(), workflows });
-    const result = await savePersistedState(persisted);
+    let result: { ok: boolean; error?: string };
+    try {
+      result = await savePersistedState(persisted);
+    } catch (error) {
+      result = {
+        ok: false,
+        error: error instanceof Error ? error.message : '未知保存错误',
+      };
+    }
     if (result.ok) {
       lastSavedRevision = capturedRevision;
       if (mutationRevision === capturedRevision) {

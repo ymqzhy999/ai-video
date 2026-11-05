@@ -283,23 +283,33 @@ export async function loadPersistedState(): Promise<PersistedState | null> {
 }
 
 export async function savePersistedState(state: PersistedState): Promise<SaveResult> {
-  const payload = serializePersistedState(state);
   try {
-    localStorage.setItem(SETTINGS_KEY, JSON.stringify(payload.settings));
-  } catch {
-    /* non-fatal */
-  }
-  const ok = await idbSet(IDB_KEY, payload);
-  if (ok) return { ok: true };
-  try {
-    localStorage.setItem(LOCAL_KEY, JSON.stringify(payload));
-    return { ok: true };
+    const payload = serializePersistedState(state);
+    try {
+      localStorage.setItem(SETTINGS_KEY, JSON.stringify(payload.settings));
+    } catch {
+      /* non-fatal */
+    }
+    const ok = await idbSet(IDB_KEY, payload);
+    if (ok) return { ok: true };
+    try {
+      localStorage.setItem(LOCAL_KEY, JSON.stringify(payload));
+      return { ok: true };
+    } catch (error) {
+      const message =
+        error instanceof Error && error.name === 'QuotaExceededError'
+          ? '本地存储空间不足，请删除不用的工作流或图片素材。'
+          : '保存失败，请检查设备存储空间。';
+      return { ok: false, error: message };
+    }
   } catch (error) {
-    const message =
-      error instanceof Error && error.name === 'QuotaExceededError'
-        ? '本地存储空间不足，请删除不用的工作流或图片素材。'
-        : '保存失败，请检查设备存储空间。';
-    return { ok: false, error: message };
+    return {
+      ok: false,
+      error:
+        error instanceof Error
+          ? `保存失败：${error.message}`
+          : '保存失败：本地数据序列化异常。',
+    };
   }
 }
 
