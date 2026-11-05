@@ -1,5 +1,6 @@
 import type { ImageAsset } from '../types/studio';
 import { downloadBlob, safeFilename } from './format';
+import { deliverFile, type FileDelivery } from './files';
 
 const MAX_UPLOAD_BYTES = 14 * 1024 * 1024;
 const MAX_EDGE = 1600;
@@ -353,7 +354,7 @@ function wrapCanvasText(
   }
 }
 
-export async function downloadImage(asset: ImageAsset, filename: string, format: string): Promise<void> {
+export async function downloadImage(asset: ImageAsset, filename: string, format: string): Promise<FileDelivery | null> {
   const extension = format === 'jpeg' ? 'jpg' : format;
   const name = `${safeFilename(filename, 'comfyui-output')}.${extension}`;
   const mime = format === 'jpeg' ? 'image/jpeg' : format === 'webp' ? 'image/webp' : 'image/png';
@@ -375,21 +376,21 @@ export async function downloadImage(asset: ImageAsset, filename: string, format:
       canvas.toBlob(resolve, mime, format === 'png' ? undefined : 0.94),
     );
     if (!blob) throw new Error('image encoding failed');
-    downloadBlob(blob, name);
+    return await deliverFile(blob, name);
   } catch {
     try {
       if (asset.src.startsWith('data:')) {
         const response = await fetch(asset.src);
         const blob = await response.blob();
-        downloadBlob(blob, name);
-        return;
+        return await deliverFile(blob, name);
       }
       const response = await fetch(asset.src, { mode: 'cors' });
       if (!response.ok) throw new Error('download failed');
       const blob = await response.blob();
-      downloadBlob(blob, name);
+      return await deliverFile(blob, name);
     } catch {
       window.open(asset.src, '_blank', 'noopener,noreferrer');
+      return null;
     }
   }
 }

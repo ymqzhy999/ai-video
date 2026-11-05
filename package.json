@@ -19,7 +19,9 @@
   "dependencies": {
     "@capacitor/android": "^8.6.0",
     "@capacitor/core": "^8.6.0",
+    "@capacitor/filesystem": "^8.1.5",
     "@capacitor/ios": "^8.6.0",
+    "@capacitor/share": "^8.0.3",
     "@xyflow/react": "^12.12.1",
     "lucide-react": "^0.469.0",
     "react": "^19.3.1",

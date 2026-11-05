@@ -494,13 +494,20 @@ function NodeOutputPanel({ node }: { node: StudioNode }) {
                   </span>
                   <button
                     type="button"
-                    onClick={() =>
-                      void downloadImage(
+                    onClick={async () => {
+                      const delivery = await downloadImage(
                         image,
                         `${node.data.params.filename ?? 'comfyui-output'}-${index + 1}`,
                         String(node.data.params.format ?? 'png'),
-                      )
-                    }
+                      );
+                      if (delivery) {
+                        toast({
+                          type: delivery.kind === 'cancelled' ? 'info' : 'success',
+                          title: delivery.kind === 'shared' ? '图片已生成' : '图片已导出',
+                          description: delivery.message,
+                        });
+                      }
+                    }}
                     title="下载图片"
                   >
                     <Download size={12} />

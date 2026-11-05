@@ -50,7 +50,7 @@ import {
 import { createBlankWorkflow } from '../data/sampleWorkflows';
 import { clearExecutionCache, runExecution, type EngineOutcome, type RunTarget } from '../lib/execution';
 import { deepClone, hashString, uid } from '../lib/id';
-import { downloadText } from '../lib/format';
+import { deliverText } from '../lib/files';
 import { focusCanvasNode, screenCenterToFlow } from '../lib/flowBridge';
 
 /* ------------------------------------------------------------------ *
@@ -326,7 +326,7 @@ interface StudioStore {
   deleteWorkflow: (id: string) => Promise<void>;
   toggleWorkflowFavorite: (id: string) => void;
   importWorkflowJson: (text: string) => Promise<{ ok: boolean; message: string; warnings: string[] }>;
-  exportWorkflow: (id?: string) => void;
+  exportWorkflow: (id?: string) => Promise<void>;
   setWorkflowMeta: (patch: Partial<Pick<WorkflowRecord, 'name' | 'description' | 'category'>>) => void;
   setViewport: (viewport: Viewport) => void;
   requestFit: () => void;
@@ -1572,7 +1572,7 @@ export const useStudioStore = create<StudioStore>((set, get) => ({
     return { ok: true, message: '导入成功', warnings: parsed.warnings };
   },
 
-  exportWorkflow: (id) => {
+  exportWorkflow: async (id) => {
     const state = get();
     const workflow =
       id && id !== state.activeWorkflowId
@@ -1584,11 +1584,28 @@ export const useStudioStore = create<StudioStore>((set, get) => ({
       nodes: id && id !== state.activeWorkflowId ? workflow.nodes : state.nodes,
       edges: id && id !== state.activeWorkflowId ? workflow.edges : state.edges,
     });
-    downloadText(
-      JSON.stringify(file, null, 2),
-      `${workflow.name.replace(/[\\/:*?"<>|]+/g, '-')}.json`,
-    );
-    get().toast({ type: 'success', title: '已导出 JSON', description: workflow.name });
+    try {
+      const delivery = await deliverText(
+        JSON.stringify(file, null, 2),
+        `${workflow.name.replace(/[\\/:*?"<>|]+/g, '-')}.json`,
+      );
+      get().toast({
+        type: delivery.kind === 'cancelled' ? 'info' : 'success',
+        title:
+          delivery.kind === 'shared'
+            ? 'JSON 已生成'
+            : delivery.kind === 'cancelled'
+              ? '已取消导出'
+              : 'JSON 已下载',
+        description: delivery.message,
+      });
+    } catch (error) {
+      get().toast({
+        type: 'error',
+        title: '导出失败',
+        description: error instanceof Error ? error.message : '无法保存 JSON 文件。',
+      });
+    }
   },
 
   setWorkflowMeta: (patch) => {
