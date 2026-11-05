@@ -6,6 +6,14 @@
 
 这是一个真正可交互的节点编辑器，不是静态设计稿。项目同时包含 Web、iOS（Xcode 工程）和 Android（Android Studio 工程）。
 
+## 直接下载 Android 安装包
+
+- **Debug APK**：[releases/ComfyUI-Studio-debug.apk](releases/ComfyUI-Studio-debug.apk)
+- SHA-256：[releases/ComfyUI-Studio-debug.apk.sha256](releases/ComfyUI-Studio-debug.apk.sha256)
+- 支持 Android 7.0+（minSdk 24），debug 签名，仅用于个人学习和测试，不能直接上架应用商店。
+- APK 由 [GitHub Actions](.github/workflows/build-android.yml) 在每次 main 分支构建后自动生成并提交。
+- iOS 无法提供未签名的 IPA 安装包，需要使用 Xcode 和 Apple 开发者账号签名；`ios/` 工程已完整提供。
+
 ## 这个 App 适合学什么
 
 - 节点（Node）、连接（Edge）、端口（Port）和数据类型

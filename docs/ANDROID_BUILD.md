@@ -2,6 +2,13 @@
 
 仓库内的 `android/` 是可直接用 Android Studio 打开的 Capacitor 工程。Web 产物会从 `dist/` 复制到 `android/app/src/main/assets/public/`。
 
+## 直接下载已构建的 Debug APK
+
+- [ComfyUI-Studio-debug.apk](../releases/ComfyUI-Studio-debug.apk)
+- [SHA-256 校验文件](../releases/ComfyUI-Studio-debug.apk.sha256)
+
+这是由 GitHub Actions 自动构建的 debug 签名包，适用于 Android 7.0+（minSdk 24），仅用于学习和测试。
+
 ## 环境要求
 
 - JDK 21
