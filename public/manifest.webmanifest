@@ -1,0 +1,33 @@
+{
+  "name": "ComfyUI Workflow Studio",
+  "short_name": "ComfyUI Studio",
+  "description": "面向入门的可视化 AI 工作流编辑器：节点、连线、参数与执行。",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#090b0e",
+  "theme_color": "#090b0e",
+  "lang": "zh-CN",
+  "categories": ["productivity", "developer", "education"],
+  "icons": [
+    {
+      "src": "./icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./icons/icon-1024.png",
+      "sizes": "1024x1024",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

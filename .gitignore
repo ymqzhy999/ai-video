@@ -1,0 +1,37 @@
+# Dependencies and build output
+node_modules/
+dist/
+.vite/
+*.log
+srv.log
+srv2.log
+
+# Local secrets — never commit API keys or tokens
+.env
+.env.*
+!.env.example
+*.pem
+*.p12
+*.mobileprovision
+*.jks
+*.keystore
+local.properties
+secrets/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+
+# Local / archived demos
+legacy/
+test-circle.*
+repo-meta.json
+repo-contents.json
+scripts/screenshots/
+server/studio.db
+server/*.db
+server/.venv/
+server/__pycache__/

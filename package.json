@@ -1,0 +1,40 @@
+{
+  "name": "comfyui-workflow-studio",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "ComfyUI Workflow Studio — 面向入门的可视化 AI 工作流编辑器（Web / iOS / Android）",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview --host 0.0.0.0",
+    "icons": "node scripts/generate-icons.cjs",
+    "cap:sync": "npm run build && cap sync",
+    "ios:sync": "npm run build && cap sync ios",
+    "ios:open": "cap open ios",
+    "android:sync": "npm run build && cap sync android",
+    "android:open": "cap open android",
+    "android:build": "npm run build && cap sync android && cd android && ./gradlew assembleDebug"
+  },
+  "dependencies": {
+    "@capacitor/android": "^8.6.0",
+    "@capacitor/core": "^8.6.0",
+    "@capacitor/ios": "^8.6.0",
+    "@xyflow/react": "^12.12.1",
+    "lucide-react": "^0.469.0",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "zustand": "^5.0.16"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^8.6.0",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "@vitejs/plugin-react": "^6.2.1",
+    "typescript": "^5.9.3",
+    "vite": "^8.3.6"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
