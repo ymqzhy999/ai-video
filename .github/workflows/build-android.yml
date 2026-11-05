@@ -93,5 +93,6 @@ jobs:
             echo "APK unchanged"
           else
             git commit -m "chore: publish debug APK [skip ci]"
+            git pull --rebase origin main
             git push origin HEAD:main
           fi
