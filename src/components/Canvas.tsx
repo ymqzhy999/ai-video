@@ -72,6 +72,7 @@ function CanvasInner() {
   const onNodeDragStart = useStudioStore((state) => state.onNodeDragStart);
   const addNode = useStudioStore((state) => state.addNode);
   const openNodeInspector = useStudioStore((state) => state.openNodeInspector);
+  const openNodeGuide = useStudioStore((state) => state.openNodeGuide);
   const selectNodes = useStudioStore((state) => state.selectNodes);
   const duplicateSelected = useStudioStore((state) => state.duplicateSelected);
   const deleteNodes = useStudioStore((state) => state.deleteNodes);
@@ -238,6 +239,12 @@ function CanvasInner() {
         onClick: () => openNodeInspector(menuNode.id),
       },
       {
+        id: 'guide',
+        label: '工作机制与连接教学',
+        icon: BookOpen,
+        onClick: () => openNodeGuide(menuNode.data.defType),
+      },
+      {
         id: 'duplicate',
         label: '复制节点',
         icon: Copy,
@@ -287,6 +294,7 @@ function CanvasInner() {
     toggleFavoriteNode,
     toggleNodeCollapse,
     openNodeInspector,
+    openNodeGuide,
     ungroupSelected,
     deleteNodes,
     runNode,
@@ -429,7 +437,7 @@ function CanvasInner() {
           variant={BackgroundVariant.Dots}
           gap={settings.gridSize > 16 ? settings.gridSize * 1.5 : 24}
           size={1.15}
-          color="#252a33"
+          color="var(--canvas-dot)"
         />
         {settings.showMinimap ? (
           <MiniMap

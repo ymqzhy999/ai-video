@@ -1,4 +1,4 @@
-import { memo } from 'react';
+import { memo, useRef } from 'react';
 import { Handle, Position, type NodeProps } from '@xyflow/react';
 import {
   AlertTriangle,
@@ -119,14 +119,70 @@ function StudioNodeComponent({ id, data, selected }: NodeProps<StudioNode>) {
   const settings = useStudioStore((state) => state.settings);
   const favorites = useStudioStore((state) => state.favoriteNodes);
   const toggleFavorite = useStudioStore((state) => state.toggleFavoriteNode);
+  const showLightbox = useStudioStore((state) => state.showLightbox);
+  const openNodeGuide = useStudioStore((state) => state.openNodeGuide);
+  const longPressTimer = useRef<number | null>(null);
+  const longPressOrigin = useRef<{ x: number; y: number } | null>(null);
   const childCount = useStudioStore(
     (state) =>
       state.nodes.filter((node) => node.parentId === id).length,
   );
 
+
+  const clearLongPress = () => {
+    if (longPressTimer.current !== null) {
+      window.clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
+    }
+    longPressOrigin.current = null;
+  };
+
+  const handleLongPressStart = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (event.button !== 0) return;
+    const target = event.target as Element;
+    if (
+      target.closest(
+        'button, a, input, textarea, select, .react-flow__handle, .nodrag',
+      )
+    ) {
+      return;
+    }
+    clearLongPress();
+    longPressOrigin.current = { x: event.clientX, y: event.clientY };
+    longPressTimer.current = window.setTimeout(() => {
+      longPressTimer.current = null;
+      openNodeGuide(data.defType);
+    }, 620);
+
+    const onMove = (moveEvent: PointerEvent) => {
+      const origin = longPressOrigin.current;
+      if (!origin) return;
+      if (
+        Math.abs(moveEvent.clientX - origin.x) > 9 ||
+        Math.abs(moveEvent.clientY - origin.y) > 9
+      ) {
+        clearLongPress();
+        window.removeEventListener('pointermove', onMove);
+      }
+    };
+    const onEnd = () => {
+      clearLongPress();
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', onEnd);
+      window.removeEventListener('pointercancel', onEnd);
+    };
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onEnd);
+    window.addEventListener('pointercancel', onEnd);
+  };
+
   if (data.defType === 'group') {
     return (
-      <div className={`group-node ${selected ? 'is-selected' : ''}`}>
+      <div
+        className={`group-node ${selected ? 'is-selected' : ''}`}
+        onPointerDown={handleLongPressStart}
+        title="长按查看工作机制与连接教学"
+      >
         <div className="group-node__header">
           <span className="group-node__dots">
             <i />
@@ -166,6 +222,8 @@ function StudioNodeComponent({ id, data, selected }: NodeProps<StudioNode>) {
         ? [{ src: data.params.image, alt: data.label }]
         : [];
   const previewImage = images[0];
+  const videos = data.result?.videos ?? [];
+  const isVideoPreview = videos.length > 0;
   const summary = paramSummary({ id, data } as StudioNode);
   const isOutput = definition.category === 'output';
   const isFavorite = favorites.includes(data.defType);
@@ -174,6 +232,8 @@ function StudioNodeComponent({ id, data, selected }: NodeProps<StudioNode>) {
 
   return (
     <div
+      onPointerDown={handleLongPressStart}
+      title="长按查看工作机制与连接教学"
       className={[
         'studio-node',
         `studio-node--${data.status}`,
@@ -190,7 +250,6 @@ function StudioNodeComponent({ id, data, selected }: NodeProps<StudioNode>) {
           width: definition.width ?? 236,
         } as React.CSSProperties
       }
-      title={definition.description}
     >
       <div className="studio-node__header">
         <span
@@ -235,13 +294,26 @@ function StudioNodeComponent({ id, data, selected }: NodeProps<StudioNode>) {
           ) : (
             <>
               {previewImage ? (
-                <div className={`node-preview ${isOutput ? 'node-preview--large' : ''}`}>
+                <button
+                  type="button"
+                  className={`node-preview nodrag nopan ${isOutput ? 'node-preview--large' : ''} ${isVideoPreview ? 'node-preview--video' : ''}`}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    showLightbox(previewImage);
+                  }}
+                  title="点击放大预览"
+                >
                   <img src={previewImage.src} alt={previewImage.alt ?? data.label} draggable={false} />
+                  {isVideoPreview ? (
+                    <span className="node-preview__play">
+                      <Play size={16} fill="currentColor" />
+                    </span>
+                  ) : null}
                   {simulated ? <span className="node-preview__badge">SIMULATION</span> : null}
                   {images.length > 1 ? (
                     <span className="node-preview__count">+{images.length - 1}</span>
                   ) : null}
-                </div>
+                </button>
               ) : null}
 
               {textResult && (isOutput || data.defType === 'text-output') ? (

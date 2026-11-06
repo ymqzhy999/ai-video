@@ -7,6 +7,7 @@ import { downloadImage } from '../lib/image';
 export function ImageLightbox() {
   const asset = useStudioStore((state) => state.ui.lightbox);
   const showLightbox = useStudioStore((state) => state.showLightbox);
+  const toast = useStudioStore((state) => state.toast);
 
   useEffect(() => {
     if (!asset) return;
@@ -31,8 +32,28 @@ export function ImageLightbox() {
           <div>
             <button
               type="button"
-              onClick={() => void downloadImage(asset, asset.filename ?? 'comfyui-output', 'png')}
-              title="下载图片"
+              onClick={async () => {
+                const delivery = await downloadImage(
+                  asset,
+                  asset.filename ?? 'comfyui-output',
+                  'png',
+                );
+                if (delivery) {
+                  toast({
+                    type: delivery.kind === 'cancelled' ? 'info' : 'success',
+                    title:
+                      delivery.kind === 'saved'
+                        ? '已保存到相册'
+                        : delivery.kind === 'shared'
+                          ? '图片已生成'
+                          : delivery.kind === 'cancelled'
+                            ? '已取消'
+                            : '图片已下载',
+                    description: delivery.message,
+                  });
+                }
+              }}
+              title="保存到相册"
             >
               <Download size={15} />
             </button>

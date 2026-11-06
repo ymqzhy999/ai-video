@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import {
   AlertTriangle,
   ArrowRight,
+  AudioLines,
   BookOpen,
   Check,
   ChevronRight,
@@ -232,18 +233,30 @@ function NodeParamsPanel({ node }: { node: StudioNode }) {
     node.data.defType === 'deepseek-refiner' && !hasDeepSeekKey(settings);
   const missingComfy =
     node.data.defType === 'comfyui-workflow' && !settings.comfyBaseUrl.trim();
+  const missingVideo =
+    node.data.defType === 'video-api' &&
+    (settings.videoProvider === 'none' ||
+      !settings.videoApiKey.trim() ||
+      !settings.videoBaseUrl.trim() ||
+      !settings.videoModel.trim());
 
   return (
     <>
-      {missingAgnes || missingDeepSeek || missingComfy ? (
+      {missingAgnes || missingDeepSeek || missingComfy || missingVideo ? (
         <div className="inspector-callout inspector-callout--warn">
           <AlertTriangle size={15} />
           <div>
             <strong>
-              {missingAgnes ? '未配置 Agnes API Key' : missingDeepSeek ? '未配置 DeepSeek API Key' : '未配置 ComfyUI 服务'}
+              {missingAgnes
+                ? '未配置 Agnes API Key'
+                : missingDeepSeek
+                  ? '未配置 DeepSeek API Key'
+                  : missingVideo
+                    ? '未配置视频 API'
+                    : '未配置 ComfyUI 服务'}
             </strong>
             <p>
-              {missingAgnes || missingDeepSeek
+              {missingAgnes || missingDeepSeek || missingVideo
                 ? '执行时会使用明确标注的模拟模式，不会假装已生成真实结果。'
                 : '这个节点需要本地可访问的 ComfyUI 服务地址。'}
             </p>
@@ -503,12 +516,17 @@ function NodeOutputPanel({ node }: { node: StudioNode }) {
                       if (delivery) {
                         toast({
                           type: delivery.kind === 'cancelled' ? 'info' : 'success',
-                          title: delivery.kind === 'shared' ? '图片已生成' : '图片已导出',
+                          title:
+                            delivery.kind === 'saved'
+                              ? '已保存到相册'
+                              : delivery.kind === 'shared'
+                                ? '图片已生成'
+                                : '图片已导出',
                           description: delivery.message,
                         });
                       }
                     }}
-                    title="下载图片"
+                    title="保存到相册"
                   >
                     <Download size={12} />
                   </button>
@@ -521,6 +539,82 @@ function NodeOutputPanel({ node }: { node: StudioNode }) {
               模拟输出仅用于学习工作流结构，不是真实 AI 生成结果。
             </p>
           ) : null}
+        </section>
+      ) : null}
+
+      {result?.videos?.length ? (
+        <section className="inspector-section">
+          <div className="section-title-row">
+            <h3>视频输出</h3>
+            <span>{result.videos.length} 个视频</span>
+          </div>
+          <div className="result-video-list">
+            {result.videos.map((video, index) => (
+              <figure className="result-video" key={`${video.src ?? video.poster ?? 'video'}-${index}`}>
+                {video.src && !video.simulated ? (
+                  <video
+                    src={video.src}
+                    poster={video.poster}
+                    controls
+                    playsInline
+                    preload="metadata"
+                  />
+                ) : video.poster ? (
+                  <button
+                    type="button"
+                    className="result-video__poster"
+                    onClick={() =>
+                      showLightbox({
+                        src: video.poster as string,
+                        width: video.width,
+                        height: video.height,
+                        alt: '视频结构预览',
+                        simulated: video.simulated,
+                      })
+                    }
+                  >
+                    <img src={video.poster} alt="视频结构预览" />
+                    <span className="result-video__play">
+                      <Play size={20} fill="currentColor" />
+                    </span>
+                  </button>
+                ) : (
+                  <div className="result-video__empty">暂无视频画面</div>
+                )}
+                <figcaption>
+                  <span>
+                    {video.width} × {video.height} · {video.fps}fps · {video.duration.toFixed(1)}s
+                  </span>
+                  {video.simulated ? <em className="result-badge sim">模拟视频</em> : null}
+                </figcaption>
+              </figure>
+            ))}
+          </div>
+          {result.videos.some((video) => video.simulated) ? (
+            <p className="result-note">
+              当前为结构预览。真实视频生成需要配置视频 API，或使用 ComfyUI 视频工作流。
+            </p>
+          ) : null}
+        </section>
+      ) : null}
+
+      {result?.audio?.length ? (
+        <section className="inspector-section">
+          <div className="section-title-row">
+            <h3>音频输出</h3>
+            <span>{result.audio.length} 条</span>
+          </div>
+          {result.audio.map((audio, index) => (
+            <div className="result-audio" key={`${audio.label ?? 'audio'}-${index}`}>
+              <span className="result-audio__icon">
+                <AudioLines size={14} />
+              </span>
+              <div>
+                <strong>{audio.label ?? `音频 ${index + 1}`}</strong>
+                <p>{audio.duration.toFixed(1)} 秒 · {audio.simulated ? '结构预览' : '音频'}</p>
+              </div>
+            </div>
+          ))}
         </section>
       ) : null}
 
@@ -752,6 +846,22 @@ function WorkflowOverview() {
             <span className={`api-dot ${settings.comfyBaseUrl ? 'is-on' : ''}`} />
             <span>ComfyUI 服务</span>
             <em>{settings.comfyBaseUrl ? '已配置' : '未配置'}</em>
+            <ChevronRight size={12} />
+          </button>
+          <button type="button" onClick={() => openModal('settings')}>
+            <span
+              className={`api-dot ${
+                settings.videoProvider !== 'none' && settings.videoApiKey.trim() ? 'is-on' : ''
+              }`}
+            />
+            <span>视频生成 API</span>
+            <em>
+              {settings.videoProvider === 'none'
+                ? '未配置'
+                : settings.videoApiKey.trim()
+                  ? '已配置'
+                  : '缺 Key'}
+            </em>
             <ChevronRight size={12} />
           </button>
         </div>

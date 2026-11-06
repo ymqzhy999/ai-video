@@ -2,9 +2,10 @@ import { Capacitor } from '@capacitor/core';
 import { Directory, Filesystem } from '@capacitor/filesystem';
 import { Share } from '@capacitor/share';
 import { downloadBlob, safeFilename } from './format';
+import { saveBase64ToGallery } from './gallery';
 
 export type FileDelivery = {
-  kind: 'downloaded' | 'shared' | 'cancelled';
+  kind: 'downloaded' | 'shared' | 'cancelled' | 'saved';
   message: string;
 };
 
@@ -74,4 +75,35 @@ export async function deliverText(
   mime = 'application/json',
 ): Promise<FileDelivery> {
   return deliverFile(new Blob([text], { type: `${mime};charset=utf-8` }), filename);
+}
+
+
+export async function saveImageToGallery(
+  blob: Blob,
+  filename: string,
+  mimeType: string,
+): Promise<FileDelivery> {
+  const safeName = safeFilename(filename, 'comfyui-image');
+  if (Capacitor.getPlatform() === 'android') {
+    const base64 = await blobToBase64(blob);
+    try {
+      const result = await saveBase64ToGallery(base64, safeName, mimeType);
+      return {
+        kind: 'saved',
+        message: `已保存到相册：${result.path}`,
+      };
+    } catch (error) {
+      // Older Android versions and unusual gallery failures fall back to the
+      // native share sheet so the image can still be saved.
+      const fallback = await deliverFile(blob, safeName);
+      return {
+        ...fallback,
+        message:
+          error instanceof Error
+            ? `${fallback.message}（相册直存不可用：${error.message}）`
+            : fallback.message,
+      };
+    }
+  }
+  return deliverFile(blob, safeName);
 }

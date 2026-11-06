@@ -1,8 +1,10 @@
 import type {
   AppSettings,
   ExecutionLog,
+  AudioAsset,
   ImageAsset,
   NodeResult,
+  VideoAsset,
   NodeStatus,
   StudioEdge,
   StudioNode,
@@ -21,6 +23,7 @@ import {
   refinePromptWithDeepSeek,
   runComfyWorkflow,
 } from './api';
+import { generateVideoViaApi } from './videoApi';
 import {
   adjustImage,
   cropImage,
@@ -253,7 +256,66 @@ function asImage(value: unknown): ImageAsset | null {
   return null;
 }
 
-function asLatent(value: unknown): { width: number; height: number; batch: number } {
+function asVideo(value: unknown): VideoAsset | null {
+  if (!value || typeof value !== 'object') return null;
+  const candidate = value as Partial<VideoAsset>;
+  if (typeof candidate.width !== 'number' || typeof candidate.height !== 'number') return null;
+  return {
+    src: typeof candidate.src === 'string' ? candidate.src : undefined,
+    poster: typeof candidate.poster === 'string' ? candidate.poster : undefined,
+    width: candidate.width,
+    height: candidate.height,
+    duration: Number(candidate.duration ?? 0),
+    fps: Number(candidate.fps ?? 16),
+    simulated: Boolean(candidate.simulated),
+    provider: candidate.provider,
+    filename: candidate.filename,
+    mimeType: candidate.mimeType,
+  };
+}
+
+function asAudio(value: unknown): AudioAsset | null {
+  if (!value || typeof value !== 'object') return null;
+  const candidate = value as Partial<AudioAsset>;
+  return {
+    src: typeof candidate.src === 'string' ? candidate.src : undefined,
+    duration: Number(candidate.duration ?? 0),
+    simulated: Boolean(candidate.simulated),
+    label: candidate.label,
+  };
+}
+
+function makeSimulatedVideo(
+  prompt: string,
+  width: number,
+  height: number,
+  duration: number,
+  fps: number,
+  seed: number,
+  provider = '本地视频模拟',
+): { video: VideoAsset; poster: ImageAsset } {
+  const poster = makeMockImage(
+    prompt || 'video storyboard preview',
+    Math.min(width, 768),
+    Math.min(height, 1024),
+    seed || 1,
+    3,
+  );
+  return {
+    video: {
+      poster: poster.src,
+      width,
+      height,
+      duration,
+      fps,
+      simulated: true,
+      provider,
+    },
+    poster,
+  };
+}
+
+function asLatent(value: unknown): { width: number; height: number; batch: number; frames?: number; fps?: number } {
   if (value && typeof value === 'object') {
     const latent = value as { width?: unknown; height?: unknown; batch?: unknown };
     return {
@@ -713,6 +775,440 @@ async function executeNode(runtime: ExecutionRuntime, node: StudioNode): Promise
       });
       reportLive();
       return { outputs: { text }, text };
+    }
+    case 'character-card': {
+      reportLive();
+      const character = [
+        `角色：${String(params.name ?? '未命名')}`,
+        `外形与服装：${String(params.appearance ?? '')}`,
+        `性格与气质：${String(params.personality ?? '')}`,
+        `声音设定：${String(params.voice ?? '')}`,
+      ].join('\n');
+      const reference = asImage(inputs.image);
+      return {
+        outputs: { text: character, image: reference },
+        images: reference ? [reference] : undefined,
+        text: character,
+        meta: { type: 'character-card', name: params.name },
+      };
+    }
+    case 'storyboard-script': {
+      reportLive();
+      const premise = asText(inputs.premise) || '雨夜的天台，两个人擦肩而过。';
+      const character = asText(inputs.character);
+      const shots = Math.max(2, Math.min(12, Number(params.shots ?? 4)));
+      const style = String(params.style ?? '');
+      const genre = String(params.genre ?? '');
+      const lines = Array.from({ length: shots }, (_, index) => {
+        const n = index + 1;
+        return `镜头 ${n}｜${index === 0 ? '建立场景' : index === shots - 1 ? '情绪落点' : '推进动作'}：${premise}`;
+      });
+      const script = [
+        `# 分镜脚本（${genre} · ${shots} 镜）`,
+        `统一画风：${style}`,
+        character ? `角色参考：${character.split('\n')[0]}` : '',
+        ...lines,
+        params.notes ? `创作要求：${String(params.notes)}` : '',
+      ]
+        .filter(Boolean)
+        .join('\n');
+      return {
+        outputs: { script },
+        text: script,
+        meta: { shots, genre, style, generator: '本地结构模板' },
+      };
+    }
+    case 'shot-prompt': {
+      reportLive();
+      const script = asText(inputs.script);
+      const character = asText(inputs.character);
+      const shotSize = String(params.shotSize ?? 'medium');
+      const camera = String(params.camera ?? 'static');
+      const prompt = [
+        script,
+        character,
+        `镜号 ${params.shotNumber ?? 1}`,
+        `景别 ${shotSize}`,
+        `机位 ${camera}`,
+        String(params.lighting ?? ''),
+        String(params.mood ?? ''),
+        'cinematic composition, consistent character design, detailed environment',
+      ]
+        .filter(Boolean)
+        .join(', ');
+      return {
+        outputs: { prompt },
+        text: prompt,
+        meta: { shot: params.shotNumber, shotSize, camera },
+      };
+    }
+    case 'tts-voice': {
+      const text = asText(inputs.text);
+      if (!text.trim()) throw new ApiError('缺少台词文本。');
+      const duration = Math.max(1, text.length / 5);
+      reportSimulated();
+      log('TTS 配音节点为结构预览：音频接口尚未接入，已返回时长占位。', 'warn');
+      const audio: AudioAsset = {
+        duration,
+        simulated: true,
+        label: `${String(params.voice ?? 'voice')} · ${String(params.emotion ?? 'neutral')}`,
+      };
+      return {
+        outputs: { audio },
+        audio: [audio],
+        text,
+        simulated: true,
+        meta: { provider: '结构预览', voice: params.voice, speed: params.speed },
+      };
+    }
+    case 'music-gen': {
+      reportSimulated();
+      const duration = Number(params.duration ?? 30);
+      const audio: AudioAsset = {
+        duration,
+        simulated: true,
+        label: `${String(params.genre ?? 'cinematic')} · ${Number(params.bpm ?? 72)} BPM`,
+      };
+      log('BGM 生成节点为结构预览：音乐 API 尚未接入。', 'warn');
+      return {
+        outputs: { audio },
+        audio: [audio],
+        simulated: true,
+        meta: { provider: '结构预览', genre: params.genre, duration },
+      };
+    }
+    case 'audio-load': {
+      reportLive();
+      const src = String(params.url ?? '').trim();
+      if (!src) throw new ApiError('请先填写音频 URL。');
+      const audio: AudioAsset = {
+        src,
+        duration: Number(params.duration ?? 0),
+        label: String(params.label ?? '音频'),
+      };
+      return { outputs: { audio }, audio: [audio], text: audio.label };
+    }
+    case 'load-video': {
+      reportLive();
+      const src = String(params.url ?? '').trim();
+      const duration = Number(params.duration ?? 4);
+      if (src) {
+        const video: VideoAsset = {
+          src,
+          width: 1280,
+          height: 720,
+          duration,
+          fps: 24,
+          provider: 'URL',
+        };
+        return { outputs: { video }, videos: [video], text: src };
+      }
+      const { video, poster } = makeSimulatedVideo(
+        '视频素材占位',
+        832,
+        1216,
+        duration,
+        16,
+        1,
+      );
+      reportSimulated();
+      log('未填写视频 URL，返回结构预览。', 'warn');
+      return { outputs: { video }, videos: [video], images: [poster], simulated: true };
+    }
+    case 'video-latent': {
+      reportLive();
+      const latent = {
+        width: Number(params.width ?? 832),
+        height: Number(params.height ?? 1216),
+        frames: Number(params.frames ?? 33),
+        fps: Number(params.fps ?? 16),
+        batch: 1,
+        kind: 'video',
+      };
+      return {
+        outputs: { latent },
+        text: `${latent.width} × ${latent.height} · ${latent.frames}f @ ${latent.fps}fps`,
+        meta: latent,
+      };
+    }
+    case 'wan-image-to-video':
+    case 'wan-text-to-video': {
+      const latent = asLatent(inputs.latent);
+      const reference = asImage(inputs.image);
+      const prompt =
+        asText(inputs.prompt) ||
+        String(params.prompt ?? '') ||
+        'cinematic camera movement, consistent character';
+      if (type === 'wan-image-to-video' && !reference) {
+        throw new ApiError('Wan 图生视频需要首帧图片输入，或先使用图片载入/生成节点。');
+      }
+      progress(20, '准备视频结构预览…');
+      const width = latent.width || 832;
+      const height = latent.height || 1216;
+      const duration = Number(params.duration ?? 5);
+      const fps = Number(params.fps ?? 16);
+      const seed = asNumber(inputs.seed) || Number(params.seed ?? 1);
+      const { video, poster } = makeSimulatedVideo(
+        prompt,
+        width,
+        height,
+        duration,
+        fps,
+        seed,
+        'Wan 结构预览',
+      );
+      reportSimulated();
+      log('Wan 视频节点当前返回结构预览；真实生成需要配置视频 API 或 ComfyUI 工作流。', 'warn');
+      return {
+        outputs: { video },
+        videos: [video],
+        images: reference ? [reference, poster] : [poster],
+        text: prompt,
+        simulated: true,
+        meta: { provider: 'Wan 结构预览', width, height, duration, fps, seed },
+      };
+    }
+    case 'video-sampler': {
+      if (!inputs.model) throw new ApiError('缺少模型输入。');
+      if (!inputs.latent) throw new ApiError('缺少视频 Latent 输入。');
+      const latent = asLatent(inputs.latent);
+      const prompt = asText(inputs.positive) || 'untitled video';
+      const seed = asNumber(inputs.seed) || Number(params.seed ?? 1);
+      const width = latent.width || 832;
+      const height = latent.height || 1216;
+      const fps = latent.fps || Number(params.fps ?? 16);
+      const { video, poster } = makeSimulatedVideo(
+        prompt,
+        width,
+        height,
+        latent.frames ? latent.frames / fps : 4,
+        fps,
+        seed,
+        '视频采样器模拟',
+      );
+      reportSimulated();
+      log('视频采样器为结构模拟；真实采样需要在 ComfyUI 中运行。', 'warn');
+      return {
+        outputs: { video },
+        videos: [video],
+        images: [poster],
+        simulated: true,
+        meta: { steps: params.steps, cfg: params.cfg, sampler: params.sampler, seed },
+      };
+    }
+    case 'video-combine': {
+      const inputVideo = asVideo(inputs.video);
+      if (!inputVideo) throw new ApiError('缺少视频输入。');
+      const audio = asAudio(inputs.audio);
+      const output: VideoAsset = {
+        ...inputVideo,
+        width: inputVideo.width,
+        height: inputVideo.height,
+        duration: inputVideo.duration,
+        fps: Number(params.fps ?? inputVideo.fps ?? 24),
+        provider: '视频合成结构预览',
+        simulated: true,
+        filename: `combined.${String(params.format ?? 'mp4')}`,
+      };
+      reportSimulated();
+      log(
+        audio
+          ? '视频合成结构预览：已接收音频，真实合成需要 ffmpeg / 视频服务。'
+          : '视频合成结构预览：真实合成需要 ffmpeg / 视频服务。',
+        'warn',
+      );
+      return {
+        outputs: { video: output },
+        videos: [output],
+        images: output.poster ? [{ src: output.poster, alt: '视频合成预览' }] : undefined,
+        simulated: true,
+        meta: { fps: output.fps, format: params.format, codec: params.codec, crf: params.crf },
+      };
+    }
+    case 'save-video': {
+      const inputVideo = asVideo(inputs.video);
+      if (!inputVideo) throw new ApiError('缺少视频输入。');
+      const output: VideoAsset = {
+        ...inputVideo,
+        filename: `${String(params.filename ?? 'comfyui-video')}.${String(params.format ?? 'mp4')}`,
+        mimeType: 'video/mp4',
+      };
+      reportSimulated();
+      log('保存视频为结构节点：真实视频落盘需要视频服务或 ffmpeg。', 'warn');
+      return {
+        outputs: {},
+        videos: [output],
+        images: output.poster ? [{ src: output.poster, alt: '视频输出预览' }] : undefined,
+        simulated: true,
+        meta: { filename: output.filename, provider: output.provider },
+      };
+    }
+    case 'video-output': {
+      const inputVideo = asVideo(inputs.video);
+      if (!inputVideo) throw new ApiError('缺少视频输入。');
+      reportLive();
+      return {
+        outputs: {},
+        videos: [inputVideo],
+        images: inputVideo.poster
+          ? [{ src: inputVideo.poster, alt: '视频首帧', simulated: inputVideo.simulated }]
+          : undefined,
+        meta: {
+          duration: inputVideo.duration,
+          fps: inputVideo.fps,
+          size: `${inputVideo.width} × ${inputVideo.height}`,
+          simulated: inputVideo.simulated,
+        },
+      };
+    }
+    case 'video-api': {
+      const prompt = asText(inputs.prompt) || String(params.prompt ?? '');
+      if (!prompt.trim()) throw new ApiError('请填写视频提示词。');
+      const seed = asNumber(inputs.seed) || Number(params.seed ?? 1);
+      const aspect = String(params.aspect ?? '9:16');
+      const resolution = String(params.resolution ?? '720p');
+      const longEdge = resolution === '1080p' ? 1920 : resolution === '480p' ? 854 : 1280;
+      const dimensions =
+        aspect === '16:9'
+          ? { width: longEdge, height: Math.round((longEdge * 9) / 16) }
+          : aspect === '1:1'
+            ? { width: Math.round(longEdge * 0.75), height: Math.round(longEdge * 0.75) }
+            : { width: Math.round((longEdge * 9) / 16), height: longEdge };
+      const configured =
+        settings.videoProvider !== 'none' &&
+        Boolean(settings.videoApiKey.trim()) &&
+        Boolean(settings.videoBaseUrl.trim()) &&
+        Boolean(settings.videoModel.trim());
+      if (mode === 'live' && configured) {
+        progress(15, '提交视频生成任务…');
+        const reference = asImage(inputs.image);
+        const result = await generateVideoViaApi(
+          settings,
+          {
+            prompt,
+            negativePrompt: asText(inputs.negative) || String(params.negative ?? ''),
+            imageUrl: reference?.src,
+            width: dimensions.width,
+            height: dimensions.height,
+            duration: Number(params.duration ?? 5),
+            fps: 24,
+            seed,
+            aspect,
+            resolution,
+            extraJson: String(params.requestJson ?? '{}'),
+          },
+          signal,
+        );
+        progress(92, '视频任务完成，准备预览…');
+        const video: VideoAsset = {
+          src: result.videoUrl,
+          poster: result.poster,
+          width: dimensions.width,
+          height: dimensions.height,
+          duration: Number(params.duration ?? 5),
+          fps: 24,
+          provider: result.provider,
+          simulated: false,
+        };
+        reportLive();
+        log(`视频 API 完成：${result.provider}`, 'success');
+        return {
+          outputs: { video },
+          videos: [video],
+          text: prompt,
+          meta: {
+            provider: result.provider,
+            aspect,
+            resolution,
+            width: dimensions.width,
+            height: dimensions.height,
+          },
+        };
+      }
+      if (mode === 'live' && settings.videoProvider !== 'none' && !configured) {
+        throw new ApiError(
+          '视频 API 配置不完整：请到设置 → 视频 API 填写 Key、Base URL 和模型，或把服务类型改为“未配置”以使用模拟预览。',
+        );
+      }
+      const { video, poster } = makeSimulatedVideo(
+        prompt,
+        dimensions.width,
+        dimensions.height,
+        Number(params.duration ?? 5),
+        24,
+        seed,
+        settings.videoProvider === 'none' ? '视频 API 结构预览' : '视频 API 未出网',
+      );
+      reportSimulated();
+      log(
+        settings.videoProvider === 'none'
+          ? '视频 API 未配置：已返回带 SIMULATION 标记的结构预览。'
+          : '当前为模拟模式：已返回结构预览，未调用视频 API。',
+        'warn',
+      );
+      return {
+        outputs: { video },
+        videos: [video],
+        images: [poster],
+        simulated: true,
+        text: prompt,
+        meta: { provider: '视频 API 结构预览', aspect, duration: params.duration },
+      };
+    }
+    case 'vae-loader': {
+      reportLive();
+      const vae = { name: String(params.model ?? 'wan-vae'), kind: 'vae' };
+      return { outputs: { vae }, text: String(vae.name), meta: vae };
+    }
+    case 'vae-decode': {
+      const latent = asLatent(inputs.latent);
+      if (!inputs.vae) throw new ApiError('缺少 VAE 输入。');
+      const poster = makeMockImage('VAE decode preview', latent.width, latent.height, 77, 2);
+      reportSimulated();
+      log('VAE 解码为结构预览；真实解码需要 ComfyUI。', 'warn');
+      return {
+        outputs: { image: poster },
+        images: [poster],
+        simulated: true,
+        meta: { provider: 'VAE 结构预览', width: latent.width, height: latent.height },
+      };
+    }
+    case 'ipadapter':
+    case 'controlnet-apply': {
+      if (!inputs.model) throw new ApiError('缺少模型输入。');
+      if (!asImage(inputs.image)) throw new ApiError(type === 'ipadapter' ? '缺少角色参考图。' : '缺少控制图。');
+      reportSimulated();
+      log(
+        type === 'ipadapter'
+          ? 'IP-Adapter 为结构节点；真实角色一致性需要 ComfyUI + IP-Adapter。'
+          : 'ControlNet 为结构节点；真实控制需要 ComfyUI + ControlNet。',
+        'warn',
+      );
+      return {
+        outputs: {
+          model: {
+            ...(typeof inputs.model === 'object' ? inputs.model : { base: inputs.model }),
+            ...(type === 'ipadapter'
+              ? { ipadapter: params.preset, weight: params.weight }
+              : { controlnet: params.type, strength: params.strength }),
+            structural: true,
+          },
+        },
+        simulated: true,
+        meta: { type, params },
+      };
+    }
+    case 'face-lock': {
+      const image = asImage(inputs.image);
+      if (!image) throw new ApiError('缺少图像输入。');
+      reportSimulated();
+      log('角色面部锁定为结构预览；真实一致性需要人脸模型 / ComfyUI。', 'warn');
+      return {
+        outputs: { image },
+        images: [image],
+        simulated: true,
+        meta: { mode: params.mode, strength: params.strength, provider: '结构预览' },
+      };
     }
     case 'note':
     case 'group':

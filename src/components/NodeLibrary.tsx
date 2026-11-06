@@ -1,9 +1,11 @@
 import { useMemo, useState } from 'react';
 import {
   Blocks,
+  BookOpenText,
   Boxes,
   ChevronDown,
   ChevronRight,
+  Clapperboard,
   Cpu,
   Download,
   FileOutput,
@@ -16,6 +18,7 @@ import {
   Sparkles,
   Star,
   Type,
+  Video,
   X,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
@@ -36,6 +39,8 @@ const CATEGORY_ICONS: Record<NodeCategoryId, LucideIcon> = {
   sampling: Cpu,
   params: Hash,
   output: FileOutput,
+  storyboard: BookOpenText,
+  video: Video,
   custom: Blocks,
 };
 
@@ -47,6 +52,7 @@ export function NodeLibrary() {
   const favoriteNodes = useStudioStore((state) => state.favoriteNodes);
   const addNodeAtCenter = useStudioStore((state) => state.addNodeAtCenter);
   const toggleFavoriteNode = useStudioStore((state) => state.toggleFavoriteNode);
+  const openNodeGuide = useStudioStore((state) => state.openNodeGuide);
   const addRecentNode = useStudioStore((state) => state.addRecentNode);
   const leftOpen = useStudioStore((state) => state.ui.leftOpen);
   const setUI = useStudioStore((state) => state.setUI);
@@ -140,6 +146,18 @@ export function NodeLibrary() {
           </span>
         </span>
         <span className="library-card__actions">
+          <button
+            type="button"
+            className="library-card__guide"
+            onClick={(event) => {
+              event.stopPropagation();
+              openNodeGuide(definition.type);
+            }}
+            aria-label={`查看 ${definition.title} 的教学`}
+            title="工作机制与连接教学"
+          >
+            <BookOpenText size={12} />
+          </button>
           <button
             type="button"
             className={`library-card__star ${isFavorite ? 'is-on' : ''}`}

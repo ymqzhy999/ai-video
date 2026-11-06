@@ -75,6 +75,17 @@ export function normalizeSettings(raw: unknown): AppSettings {
   return {
     ...DEFAULT_SETTINGS,
     ...candidate,
+    theme:
+      candidate.theme === 'light' || candidate.theme === 'dark' || candidate.theme === 'system'
+        ? candidate.theme
+        : DEFAULT_SETTINGS.theme,
+    videoProvider:
+      candidate.videoProvider === 'fal' ||
+      candidate.videoProvider === 'replicate' ||
+      candidate.videoProvider === 'custom' ||
+      candidate.videoProvider === 'none'
+        ? candidate.videoProvider
+        : DEFAULT_SETTINGS.videoProvider,
     executionMode:
       candidate.executionMode === 'live' ||
       candidate.executionMode === 'mock' ||

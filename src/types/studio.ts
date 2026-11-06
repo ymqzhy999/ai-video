@@ -11,6 +11,9 @@ export type PortType =
   | 'NUMBER'
   | 'LATENT'
   | 'CONDITIONING'
+  | 'VIDEO'
+  | 'AUDIO'
+  | 'VAE'
   | 'ANY';
 
 export interface PortTypeMeta {
@@ -57,6 +60,24 @@ export const PORT_TYPES: Record<PortType, PortTypeMeta> = {
     color: '#ff7ac3',
     description: '编码后的提示词条件',
   },
+  VIDEO: {
+    label: '视频',
+    short: 'VID',
+    color: '#ff8a5b',
+    description: '视频文件、视频帧序列或视频 URL',
+  },
+  AUDIO: {
+    label: '音频',
+    short: 'AUD',
+    color: '#e879f9',
+    description: '配音、BGM 或音频文件',
+  },
+  VAE: {
+    label: 'VAE',
+    short: 'VAE',
+    color: '#6ee7b7',
+    description: '图像编码/解码器',
+  },
   ANY: {
     label: '任意',
     short: 'ANY',
@@ -76,6 +97,8 @@ export type NodeCategoryId =
   | 'sampling'
   | 'params'
   | 'output'
+  | 'storyboard'
+  | 'video'
   | 'custom';
 
 export interface NodeCategory {
@@ -95,6 +118,8 @@ export const NODE_CATEGORIES: NodeCategory[] = [
   { id: 'sampling', label: '采样节点', description: '采样器、步数与潜空间' },
   { id: 'params', label: '参数节点', description: '数值、尺寸与随机种子' },
   { id: 'output', label: '输出节点', description: '结果预览与落盘' },
+  { id: 'storyboard', label: '漫剧创作', description: '角色、分镜、台词与分镜提示词' },
+  { id: 'video', label: '视频节点', description: '图生视频、采样、合成与视频输出' },
   { id: 'custom', label: '自定义节点', description: 'API 请求、便签与扩展' },
 ];
 
@@ -149,6 +174,7 @@ export interface NodeDefinition {
   icon: string;
   accent: string;
   description: string;
+  implementation?: 'live' | 'simulated' | 'external' | 'structural';
   inputs: PortDef[];
   outputs: PortDef[];
   fields: FieldDef[];
@@ -181,9 +207,31 @@ export interface ImageAsset {
   filename?: string;
 }
 
+export interface VideoAsset {
+  src?: string;
+  poster?: string;
+  width: number;
+  height: number;
+  duration: number;
+  fps: number;
+  simulated?: boolean;
+  provider?: string;
+  filename?: string;
+  mimeType?: string;
+}
+
+export interface AudioAsset {
+  src?: string;
+  duration: number;
+  simulated?: boolean;
+  label?: string;
+}
+
 export interface NodeResult {
   outputs: Record<string, unknown>;
   images?: ImageAsset[];
+  videos?: VideoAsset[];
+  audio?: AudioAsset[];
   text?: string;
   meta?: Record<string, unknown>;
   simulated?: boolean;
@@ -288,7 +336,10 @@ export interface SerializedEdge {
 
 export type ExecutionMode = 'auto' | 'mock' | 'live';
 
+export type AppTheme = 'dark' | 'light' | 'system';
+
 export interface AppSettings {
+  theme: AppTheme;
   executionMode: ExecutionMode;
   agnesApiKey: string;
   agnesBaseUrl: string;
@@ -297,6 +348,10 @@ export interface AppSettings {
   deepseekBaseUrl: string;
   deepseekModel: string;
   comfyBaseUrl: string;
+  videoProvider: 'none' | 'fal' | 'replicate' | 'custom';
+  videoApiKey: string;
+  videoBaseUrl: string;
+  videoModel: string;
   backendBaseUrl: string;
   useBackendProxy: boolean;
   requestTimeoutMs: number;
@@ -309,6 +364,7 @@ export interface AppSettings {
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
+  theme: 'dark',
   executionMode: 'auto',
   agnesApiKey: '',
   agnesBaseUrl: 'https://apihub.agnes-ai.com/v1',
@@ -317,6 +373,10 @@ export const DEFAULT_SETTINGS: AppSettings = {
   deepseekBaseUrl: 'https://api.deepseek.com',
   deepseekModel: 'deepseek-chat',
   comfyBaseUrl: '',
+  videoProvider: 'none',
+  videoApiKey: '',
+  videoBaseUrl: '',
+  videoModel: '',
   backendBaseUrl: 'http://127.0.0.1:8000',
   useBackendProxy: false,
   requestTimeoutMs: 120000,
@@ -396,6 +456,7 @@ export type ModalName =
   | 'workflows'
   | 'settings'
   | 'help'
+  | 'guide'
   | 'confirm'
   | null;
 
@@ -427,6 +488,7 @@ export interface UIState {
   logTab: 'logs' | 'history';
   lightbox?: ImageAsset;
   confirm?: ConfirmOptions;
+  guideNodeType?: string;
   searchOpen: boolean;
 }
 

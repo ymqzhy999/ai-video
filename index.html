@@ -18,6 +18,18 @@
     <link rel="apple-touch-icon" href="./icons/icon-180.png" />
     <link rel="icon" type="image/svg+xml" href="./brand.svg" />
     <title>ComfyUI Workflow Studio</title>
+    <script>
+      (function () {
+        try {
+          var raw = localStorage.getItem('comfyui-studio:settings:v1');
+          var settings = raw ? JSON.parse(raw) : {};
+          var theme = settings.theme || 'dark';
+          var dark = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+          document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+          document.documentElement.style.colorScheme = dark ? 'dark' : 'light';
+        } catch (e) {}
+      })();
+    </script>
   </head>
   <body>
     <div id="root">

@@ -1,0 +1,576 @@
+/* Day theme. The editor is designed dark-first; this layer remaps the
+   material palette and the few components that need bespoke contrast. */
+[data-theme='light'] {
+  --bg: #eef1f6;
+  --bg-deep: #f4f6fa;
+  --panel: #f8fafc;
+  --panel-2: #ffffff;
+  --panel-3: #eef2f7;
+  --card: #ffffff;
+  --card-hover: #f3f6fa;
+  --card-strong: #e9eef5;
+
+  --border: #d7dee9;
+  --border-strong: #c4cedd;
+  --border-soft: #e2e8f1;
+  --border-faint: #e9eef5;
+
+  --text: #121827;
+  --text-2: #263247;
+  --text-3: #46556b;
+  --muted: #66748a;
+  --faint: #8c98aa;
+
+  --accent: #6d5efc;
+  --accent-strong: #6251e8;
+  --accent-bright: #5747dc;
+  --accent-soft: rgba(109, 94, 252, 0.09);
+  --accent-faint: rgba(109, 94, 252, 0.045);
+  --canvas-dot: #c7d0dd;
+
+  --shadow-node: 0 7px 18px rgba(30, 41, 59, 0.09);
+  --shadow-md: 0 8px 24px rgba(30, 41, 59, 0.08);
+  --shadow-lg: 0 22px 60px rgba(30, 41, 59, 0.18);
+}
+
+[data-theme='light'] body {
+  background: var(--bg);
+}
+
+[data-theme='light'] ::selection {
+  background: rgba(109, 94, 252, 0.2);
+  color: #111827;
+}
+
+[data-theme='light'] .topbar {
+  background: rgba(248, 250, 252, 0.94);
+  border-bottom-color: var(--border-soft);
+}
+
+[data-theme='light'] .brand__mark {
+  background:
+    radial-gradient(circle at 30% 20%, rgba(109, 94, 252, 0.15), transparent 65%),
+    #fff;
+  color: var(--accent-strong);
+  box-shadow: inset 0 1px 0 #fff;
+}
+
+[data-theme='light'] .project-switcher:hover {
+  background: #fff;
+}
+
+[data-theme='light'] .run-button {
+  background: linear-gradient(180deg, #796aff, #6655ed);
+}
+
+[data-theme='light'] .run-button.is-running {
+  background: linear-gradient(180deg, #fff0f1, #ffe7ea);
+}
+
+[data-theme='light'] .mobile-menu-button {
+  background: #fff;
+  color: var(--text-3);
+}
+
+[data-theme='light'] .statusbar {
+  background: #f7f9fc;
+  border-top-color: var(--border-soft);
+}
+
+[data-theme='light'] .node-library,
+[data-theme='light'] .inspector {
+  background: var(--panel);
+}
+
+[data-theme='light'] .node-library__search,
+[data-theme='light'] .segmented,
+[data-theme='light'] .workflow-search {
+  background: #fff;
+}
+
+[data-theme='light'] .library-card:hover {
+  background: #f4f7fb;
+  border-color: var(--border-soft);
+}
+
+[data-theme='light'] .library-card__actions {
+  background: linear-gradient(90deg, transparent, #f4f7fb 22%);
+}
+
+[data-theme='light'] .recent-chip {
+  background: #fff;
+}
+
+[data-theme='light'] .inspector-node-head {
+  background:
+    linear-gradient(135deg, rgba(109, 94, 252, 0.05), transparent 55%),
+    #fff;
+}
+
+[data-theme='light'] .canvas-stage {
+  background:
+    radial-gradient(ellipse at 50% -10%, rgba(109, 94, 252, 0.06), transparent 52%),
+    #eef1f6;
+}
+
+[data-theme='light'] .canvas-stage::after {
+  background: radial-gradient(ellipse at 50% 50%, transparent 54%, rgba(30, 41, 59, 0.03) 100%);
+}
+
+[data-theme='light'] .canvas-stage .react-flow__pane {
+  background: transparent;
+}
+
+[data-theme='light'] .canvas-toolbar {
+  background: rgba(255, 255, 255, 0.94);
+  border-color: var(--border);
+}
+
+[data-theme='light'] .canvas-toolbar .tool-btn {
+  color: var(--muted);
+}
+
+[data-theme='light'] .canvas-toolbar .tool-btn:hover:not(:disabled) {
+  color: var(--text);
+  background: var(--panel-3);
+  border-color: var(--border);
+}
+
+[data-theme='light'] .canvas-toolbar .tool-btn.is-active {
+  color: var(--accent-bright);
+  background: var(--accent-soft);
+  border-color: rgba(109, 94, 252, 0.22);
+}
+
+[data-theme='light'] .toolbar-popover {
+  background: #fff;
+}
+
+[data-theme='light'] .canvas-hint {
+  background: rgba(255, 255, 255, 0.78);
+  border-color: var(--border-soft);
+  color: var(--muted);
+}
+
+[data-theme='light'] .canvas-running-pill {
+  background: rgba(255, 255, 255, 0.94);
+  border-color: rgba(109, 94, 252, 0.22);
+}
+
+[data-theme='light'] .canvas-empty {
+  background: radial-gradient(ellipse at 50% 42%, rgba(109, 94, 252, 0.045), transparent 45%);
+}
+
+[data-theme='light'] .canvas-empty__mark {
+  background:
+    radial-gradient(circle at 30% 20%, rgba(109, 94, 252, 0.16), transparent 70%),
+    #fff;
+}
+
+[data-theme='light'] .canvas-empty h2 {
+  color: var(--text);
+}
+
+[data-theme='light'] .studio-node {
+  background:
+    linear-gradient(180deg, rgba(109, 94, 252, 0.02), transparent 38%),
+    #ffffff;
+  border-color: #d8e0ea;
+  color: var(--text-2);
+  box-shadow: var(--shadow-node);
+}
+
+[data-theme='light'] .studio-node:hover {
+  border-color: #bdc8d8;
+  box-shadow: 0 9px 24px rgba(30, 41, 59, 0.12);
+}
+
+[data-theme='light'] .studio-node.is-selected {
+  border-color: rgba(109, 94, 252, 0.75);
+  box-shadow:
+    0 0 0 1px rgba(109, 94, 252, 0.28),
+    0 10px 26px rgba(30, 41, 59, 0.13);
+}
+
+[data-theme='light'] .studio-node__header {
+  border-bottom-color: var(--border-faint);
+}
+
+[data-theme='light'] .studio-node__titles strong {
+  color: var(--text);
+}
+
+[data-theme='light'] .studio-node__menu {
+  color: #7e8a9d;
+}
+
+[data-theme='light'] .studio-node__menu:hover {
+  color: var(--text);
+  background: var(--panel-3);
+}
+
+[data-theme='light'] .node-preview {
+  border-color: var(--border-soft);
+  background: #f2f5f9;
+}
+
+[data-theme='light'] .node-preview__badge {
+  color: #9a6500;
+  background: rgba(255, 255, 255, 0.88);
+  border-color: rgba(190, 132, 22, 0.35);
+}
+
+[data-theme='light'] .node-text-preview {
+  background: var(--bg-deep);
+  border-color: var(--border-soft);
+  color: var(--text-3);
+}
+
+[data-theme='light'] .node-port {
+  color: var(--text-3);
+}
+
+[data-theme='light'] .node-chip {
+  background: #f2f5f9;
+  border-color: var(--border-soft);
+  color: var(--muted);
+}
+
+[data-theme='light'] .studio-node__footer {
+  background: #f9fbfd;
+  border-top-color: var(--border-faint);
+}
+
+[data-theme='light'] .node-state {
+  color: var(--muted);
+}
+
+[data-theme='light'] .studio-node__titles small {
+  color: var(--faint);
+}
+
+[data-theme='light'] .studio-node--note {
+  background: #fffdf6;
+  border-color: #e2dcc9;
+}
+
+[data-theme='light'] .studio-node__note-body {
+  color: var(--text-3);
+}
+
+[data-theme='light'] .group-node {
+  border-color: rgba(109, 94, 252, 0.28);
+  background: rgba(109, 94, 252, 0.025);
+}
+
+[data-theme='light'] .group-node__header {
+  background: rgba(247, 249, 252, 0.8);
+}
+
+[data-theme='light'] .group-node__title {
+  color: var(--accent-bright);
+}
+
+[data-theme='light'] .edge-label {
+  background: #fff;
+  box-shadow: 0 3px 10px rgba(30, 41, 59, 0.12);
+}
+
+[data-theme='light'] .studio-minimap {
+  background: rgba(255, 255, 255, 0.92) !important;
+}
+
+[data-theme='light'] .canvas-selection-pill {
+  background: rgba(255, 255, 255, 0.96);
+  border-color: var(--border);
+  color: var(--muted);
+}
+
+[data-theme='light'] .canvas-selection-pill button:hover {
+  background: var(--panel-3);
+  color: var(--text);
+}
+
+[data-theme='light'] .log-drawer {
+  background: rgba(248, 250, 252, 0.98);
+  box-shadow: 0 -20px 50px rgba(30, 41, 59, 0.1);
+}
+
+[data-theme='light'] .log-drawer__header {
+  border-bottom-color: var(--border-soft);
+}
+
+[data-theme='light'] .log-row {
+  border-bottom-color: var(--border-faint);
+}
+
+[data-theme='light'] .log-row p {
+  color: var(--text-3);
+}
+
+[data-theme='light'] .log-row__time {
+  color: var(--faint);
+}
+
+[data-theme='light'] .history-row {
+  border-bottom-color: var(--border-faint);
+}
+
+[data-theme='light'] .mobile-nav {
+  background: rgba(248, 250, 252, 0.97);
+  border-top-color: var(--border);
+}
+
+[data-theme='light'] .mobile-nav > button {
+  color: var(--faint);
+}
+
+[data-theme='light'] .mobile-nav > button.is-active {
+  color: var(--accent-bright);
+}
+
+[data-theme='light'] .mobile-nav__run span:last-child {
+  color: var(--text-3);
+}
+
+[data-theme='light'] .mobile-sheet {
+  background: #fff;
+  border-top-color: var(--border);
+}
+
+[data-theme='light'] .mobile-action {
+  background: #f8fafc;
+  border-color: var(--border-soft);
+  color: var(--text-3);
+}
+
+[data-theme='light'] .mobile-action__icon {
+  color: var(--muted);
+}
+
+[data-theme='light'] .sheet-layer {
+  background: rgba(15, 23, 42, 0.38);
+}
+
+[data-theme='light'] .drawer-backdrop {
+  background: rgba(15, 23, 42, 0.3);
+}
+
+[data-theme='light'] .modal-layer {
+  background: rgba(15, 23, 42, 0.35);
+}
+
+[data-theme='light'] .modal {
+  background:
+    linear-gradient(180deg, rgba(109, 94, 252, 0.02), transparent 22%),
+    #fff;
+  border-color: var(--border);
+}
+
+[data-theme='light'] .modal__header {
+  border-bottom-color: var(--border-soft);
+}
+
+[data-theme='light'] .modal__footer {
+  background: #f9fbfd;
+  border-top-color: var(--border-soft);
+}
+
+[data-theme='light'] .settings-nav,
+[data-theme='light'] .workflow-categories {
+  background: #f4f7fb;
+}
+
+[data-theme='light'] .settings-nav > button.is-active,
+[data-theme='light'] .workflow-categories button.is-active {
+  background: var(--accent-soft);
+}
+
+[data-theme='light'] .settings-card,
+[data-theme='light'] .workflow-card {
+  background: #fff;
+}
+
+[data-theme='light'] .workflow-card__preview {
+  background: #f3f6fa;
+}
+
+[data-theme='light'] .workflow-thumb--empty span {
+  border-color: var(--border-strong);
+}
+
+[data-theme='light'] .workflow-card__actions {
+  border-top-color: var(--border-faint);
+}
+
+[data-theme='light'] .workflow-categories__hint {
+  border-top-color: var(--border-faint);
+}
+
+[data-theme='light'] .help-intro {
+  background:
+    linear-gradient(135deg, rgba(109, 94, 252, 0.05), transparent 50%),
+    #fff;
+}
+
+[data-theme='light'] .mini-node {
+  background: #fff;
+}
+
+[data-theme='light'] .lesson-row,
+[data-theme='light'] .concept-card,
+[data-theme='light'] .compare-grid > div,
+[data-theme='light'] .shortcut-group {
+  background: #fff;
+}
+
+[data-theme='light'] .shortcut-group h3 {
+  background: #f5f7fb;
+}
+
+[data-theme='light'] .port-type-table,
+[data-theme='light'] .shortcut-group {
+  border-color: var(--border-soft);
+}
+
+[data-theme='light'] .toast {
+  background: rgba(255, 255, 255, 0.98);
+}
+
+[data-theme='light'] .context-menu {
+  background: #fff;
+}
+
+[data-theme='light'] .context-menu__item:hover:not(:disabled) {
+  background: var(--panel-3);
+}
+
+[data-theme='light'] .field input,
+[data-theme='light'] .field textarea,
+[data-theme='light'] .field select {
+  background: #fff;
+}
+
+[data-theme='light'] .field input:focus,
+[data-theme='light'] .field textarea:focus,
+[data-theme='light'] .field select:focus {
+  background: #fff;
+}
+
+[data-theme='light'] .select-wrap::after {
+  border-color: var(--muted);
+}
+
+[data-theme='light'] .image-dropzone {
+  background: #f8fafc;
+}
+
+[data-theme='light'] .image-field,
+[data-theme='light'] .text-result {
+  background: #f8fafc;
+}
+
+[data-theme='light'] .result-video,
+[data-theme='light'] .result-audio {
+  background: #f8fafc;
+}
+
+[data-theme='light'] .readonly-value {
+  background: #f8fafc;
+}
+
+[data-theme='light'] .lightbox {
+  /* Keep media viewing surfaces dark for accurate image evaluation. */
+  background: #0c0f14;
+}
+
+[data-theme='light'] .theme-options {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 5px;
+}
+
+.theme-options {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 5px;
+}
+
+.theme-option {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+  padding: 7px;
+  border: 1px solid var(--border-soft);
+  border-radius: 6px;
+  background: var(--bg-deep);
+  text-align: left;
+}
+
+.theme-option.is-active {
+  border-color: rgba(109, 94, 252, 0.45);
+  background: var(--accent-faint);
+}
+
+.theme-option strong {
+  font-size: 9.5px;
+  color: var(--text-2);
+}
+
+.theme-option small {
+  font-size: 7.5px;
+  color: var(--faint);
+}
+
+.theme-option svg {
+  position: absolute;
+  right: 6px;
+  top: 6px;
+  color: var(--accent-bright);
+}
+
+.theme-option__preview {
+  width: 100%;
+  height: 20px;
+  border-radius: 3px;
+  border: 1px solid var(--border);
+  background: #101318;
+}
+
+.theme-option__preview--light {
+  background: #f5f7fb;
+}
+
+.theme-option__preview--system {
+  background: linear-gradient(90deg, #101318 50%, #f5f7fb 50%);
+}
+
+@media (max-width: 600px) {
+  .theme-options {
+    grid-template-columns: 1fr;
+  }
+
+  .theme-option {
+    display: grid;
+    grid-template-columns: 32px 1fr;
+    align-items: center;
+    column-gap: 7px;
+    padding: 6px 8px;
+  }
+
+  .theme-option__preview {
+    grid-row: 1 / span 2;
+  }
+
+  .theme-option strong,
+  .theme-option small {
+    grid-column: 2;
+  }
+}
+
+[data-theme='light'] .provider-logo--video {
+  color: #b54d1d;
+  background: #fff2eb;
+}

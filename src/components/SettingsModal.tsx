@@ -15,6 +15,7 @@ import {
   Trash2,
   ExternalLink,
   Cpu,
+  Video,
 } from 'lucide-react';
 import { useStudioStore } from '../store/studioStore';
 import { DEFAULT_SETTINGS, type AppSettings, type ExecutionMode } from '../types/studio';
@@ -47,6 +48,7 @@ export function SettingsModal() {
   const [draft, setDraft] = useState<AppSettings>(settings);
   const [showAgnesKey, setShowAgnesKey] = useState(false);
   const [showDeepSeekKey, setShowDeepSeekKey] = useState(false);
+  const [showVideoKey, setShowVideoKey] = useState(false);
   const [deepseekTest, setDeepseekTest] = useState<TestState>({ status: 'idle' });
   const [agnesTest, setAgnesTest] = useState<TestState>({ status: 'idle' });
   const [backendTest, setBackendTest] = useState<TestState>({ status: 'idle' });
@@ -398,6 +400,93 @@ export function SettingsModal() {
 
               <section className="settings-card">
                 <div className="settings-card__head">
+                  <span className="provider-logo provider-logo--video">
+                    <Video size={16} />
+                  </span>
+                  <div>
+                    <h3>视频生成 API（实验）</h3>
+                    <p>用于「视频生成 API」节点；支持 fal.ai、Replicate 与自定义任务接口。Wan 结构节点仍以预览为主。</p>
+                  </div>
+                </div>
+                <div className="field">
+                  <label htmlFor="video-provider">服务类型</label>
+                  <select
+                    id="video-provider"
+                    value={draft.videoProvider}
+                    onChange={(event) =>
+                      patch({
+                        videoProvider: event.target.value as AppSettings['videoProvider'],
+                      })
+                    }
+                  >
+                    <option value="none">未配置（模拟视频预览）</option>
+                    <option value="fal">fal.ai 队列接口</option>
+                    <option value="replicate">Replicate 预测接口</option>
+                    <option value="custom">自定义兼容接口</option>
+                  </select>
+                  <p className="field__help">
+                    这是实验能力：请求字段会因模型而不同，可在节点的「高级请求参数 JSON」中覆盖。未配置或请求失败时会明确显示错误或 SIMULATION 预览，不会伪造真实视频。
+                  </p>
+                </div>
+                <div className="field">
+                  <label htmlFor="video-key">视频 API Key</label>
+                  <div className="key-input">
+                    <input
+                      id="video-key"
+                      type={showVideoKey ? 'text' : 'password'}
+                      value={draft.videoApiKey}
+                      autoComplete="off"
+                      spellCheck={false}
+                      placeholder="粘贴视频服务的 Key…"
+                      onChange={(event) => patch({ videoApiKey: event.target.value })}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowVideoKey((value) => !value)}
+                      aria-label={showVideoKey ? '隐藏 Key' : '显示 Key'}
+                    >
+                      {showVideoKey ? <EyeOff size={14} /> : <Eye size={14} />}
+                    </button>
+                  </div>
+                </div>
+                <div className="settings-row-2">
+                  <div className="field">
+                    <label htmlFor="video-base">Base URL</label>
+                    <input
+                      id="video-base"
+                      value={draft.videoBaseUrl}
+                      placeholder="https://queue.fal.run"
+                      spellCheck={false}
+                      onChange={(event) => patch({ videoBaseUrl: event.target.value })}
+                    />
+                  </div>
+                  <div className="field">
+                    <label htmlFor="video-model">模型 ID / 路径</label>
+                    <input
+                      id="video-model"
+                      value={draft.videoModel}
+                      placeholder="fal-ai/wan-i2v"
+                      spellCheck={false}
+                      onChange={(event) => patch({ videoModel: event.target.value })}
+                    />
+                  </div>
+                </div>
+                <div className="video-provider-links">
+                  <a href="https://fal.ai" target="_blank" rel="noreferrer">fal.ai <ExternalLink size={10} /></a>
+                  <a href="https://replicate.com" target="_blank" rel="noreferrer">Replicate <ExternalLink size={10} /></a>
+                  <a href="https://modelscope.cn" target="_blank" rel="noreferrer">ModelScope <ExternalLink size={10} /></a>
+                  <a href="https://www.volcengine.com" target="_blank" rel="noreferrer">火山引擎 Seedance <ExternalLink size={10} /></a>
+                </div>
+                <p className="settings-section-desc">
+                  免费额度和模型参数由服务商决定，可能随时变化。请在对应平台确认额度、模型 ID 和请求字段后再填写。
+                </p>
+                <p className="settings-section-desc">
+                  自定义接口约定：POST <code>{'{BaseURL}'}/generate</code>，返回 <code>{'{ video_url }'}</code>，或返回 <code>{'{ id, status_url }'}</code> 后轮询到 <code>{'completed'}</code> + <code>{'video_url'}</code>。模型特有字段写在节点的「高级请求参数 JSON」里。
+                </p>
+              </section>
+
+              <section className="settings-card">
+                <div className="settings-card__head">
                   <span className="provider-logo provider-logo--comfy">
                     <Server size={16} />
                   </span>
@@ -575,6 +664,29 @@ export function SettingsModal() {
 
           {tab === 'editor' ? (
             <>
+              <section className="settings-card settings-card--flat">
+                <h3>外观主题</h3>
+                <p className="settings-section-desc">日间模式适合强光环境，夜间模式适合长时间编辑。</p>
+                <div className="theme-options">
+                  {([
+                    { value: 'dark', label: '夜间', hint: '深色专业界面' },
+                    { value: 'light', label: '日间', hint: '浅色高对比' },
+                    { value: 'system', label: '跟随系统', hint: '自动切换' },
+                  ] as const).map((option) => (
+                    <button
+                      key={option.value}
+                      type="button"
+                      className={`theme-option ${draft.theme === option.value ? 'is-active' : ''}`}
+                      onClick={() => patch({ theme: option.value })}
+                    >
+                      <span className={`theme-option__preview theme-option__preview--${option.value}`} />
+                      <strong>{option.label}</strong>
+                      <small>{option.hint}</small>
+                      {draft.theme === option.value ? <Check size={12} /> : null}
+                    </button>
+                  ))}
+                </div>
+              </section>
               <section className="settings-card settings-card--flat">
                 <h3>画布</h3>
                 <Switch

@@ -47,7 +47,7 @@ import {
   makeWorkflowFile,
   type PersistedState,
 } from '../lib/storage';
-import { createBlankWorkflow } from '../data/sampleWorkflows';
+import { createBlankWorkflow, SAMPLE_WORKFLOWS } from '../data/sampleWorkflows';
 import { clearExecutionCache, runExecution, type EngineOutcome, type RunTarget } from '../lib/execution';
 import { deepClone, hashString, uid } from '../lib/id';
 import { deliverText } from '../lib/files';
@@ -340,6 +340,7 @@ interface StudioStore {
   askConfirm: (options: ConfirmOptions) => void;
   acceptConfirm: () => void;
   openNodeInspector: (id: string) => void;
+  openNodeGuide: (type: string) => void;
   showLightbox: (asset?: ImageAsset) => void;
   toast: (toast: Omit<ToastItem, 'id'>) => void;
   dismissToast: (id: string) => void;
@@ -380,6 +381,23 @@ export const useStudioStore = create<StudioStore>((set, get) => ({
     const persisted = await loadPersistedState();
     const fallback = createDefaultState();
     const state = persisted ?? fallback;
+    const sampleMarker = 'comfyui-studio:examples-v2';
+    let addedExamples = false;
+    try {
+      if (localStorage.getItem(sampleMarker) !== '1') {
+        const existingIds = new Set(state.workflows.map((workflow) => workflow.id));
+        const missingSamples = SAMPLE_WORKFLOWS.filter(
+          (workflow) => !existingIds.has(workflow.id),
+        );
+        if (missingSamples.length) {
+          state.workflows = [...missingSamples, ...state.workflows];
+          addedExamples = true;
+        }
+        localStorage.setItem(sampleMarker, '1');
+      }
+    } catch {
+      /* non-fatal: examples still load on a clean install */
+    }
     const active =
       state.workflows.find((workflow) => workflow.id === state.activeWorkflowId) ??
       state.workflows[0];
@@ -415,6 +433,11 @@ export const useStudioStore = create<StudioStore>((set, get) => ({
         logs: [nowLog('info', `已载入「${active.name}」· ${currentModeLabel(state.settings)}`)],
       },
     });
+    if (addedExamples) {
+      window.setTimeout(() => {
+        void get().saveCurrent({ quiet: true });
+      }, 0);
+    }
   },
 
   setSaveState: (state, error) => set({ saveState: state, lastSaveError: error }),
@@ -1643,13 +1666,30 @@ export const useStudioStore = create<StudioStore>((set, get) => ({
 
   setUI: (patch) => set({ ui: { ...get().ui, ...patch } }),
   openModal: (modal) => set({ ui: { ...get().ui, activeModal: modal } }),
-  closeModal: () => set({ ui: { ...get().ui, activeModal: null, confirm: undefined } }),
+  closeModal: () =>
+    set({
+      ui: {
+        ...get().ui,
+        activeModal: null,
+        confirm: undefined,
+        guideNodeType: undefined,
+      },
+    }),
   askConfirm: (options) =>
     set({ ui: { ...get().ui, activeModal: 'confirm', confirm: options } }),
   acceptConfirm: () => {
     const confirm = get().ui.confirm;
     set({ ui: { ...get().ui, activeModal: null, confirm: undefined } });
     confirm?.onConfirm();
+  },
+  openNodeGuide: (type) => {
+    set({
+      ui: {
+        ...get().ui,
+        activeModal: 'guide',
+        guideNodeType: type,
+      },
+    });
   },
   openNodeInspector: (id) => {
     set({

@@ -20,6 +20,8 @@ import {
   Upload,
   Keyboard,
   Sparkles,
+  Sun,
+  Moon,
 } from 'lucide-react';
 import { useStudioStore } from '../store/studioStore';
 import { BrandMark } from './BrandMark';
@@ -52,10 +54,16 @@ export function TopBar() {
   const askConfirm = useStudioStore((state) => state.askConfirm);
   const setUI = useStudioStore((state) => state.setUI);
   const exportWorkflow = useStudioStore((state) => state.exportWorkflow);
+  const updateSettings = useStudioStore((state) => state.updateSettings);
   const mobileMenuOpen = ui.mobileMenuOpen;
   const setMobileMenuOpen = (open: boolean) => setUI({ mobileMenuOpen: open });
 
   const running = execution.status === 'running' || execution.status === 'validating';
+  const isLight =
+    settings.theme === 'light' ||
+    (settings.theme === 'system' &&
+      typeof window !== 'undefined' &&
+      window.matchMedia('(prefers-color-scheme: light)').matches);
   const modeLabel =
     settings.executionMode === 'mock'
       ? '模拟模式'
@@ -199,6 +207,15 @@ export function TopBar() {
         </span>
 
         <div className="topbar__tools topbar__tools--utility">
+          <ToolButton
+            icon={isLight ? Moon : Sun}
+            label={isLight ? '切换到夜间模式' : '切换到日间模式'}
+            onClick={() =>
+              updateSettings({
+                theme: isLight ? 'dark' : 'light',
+              })
+            }
+          />
           <ToolButton icon={Settings} label="设置" onClick={() => openModal('settings')} />
           <ToolButton icon={CircleHelp} label="帮助" onClick={() => openModal('help')} />
         </div>
@@ -271,6 +288,16 @@ export function TopBar() {
               <MenuAction icon={Redo2} label="重做" disabled={!futureLength} onClick={() => { redo(); setMobileMenuOpen(false); }} />
               <MenuAction icon={Maximize2} label="全览画布" onClick={() => { requestFit(); fitCanvasView(); setMobileMenuOpen(false); }} />
               <MenuAction icon={Trash2} label="清空画布" tone="danger" onClick={() => { setMobileMenuOpen(false); handleClear(); }} />
+              <MenuAction
+                icon={isLight ? Moon : Sun}
+                label={isLight ? '夜间模式' : '日间模式'}
+                onClick={() => {
+                  updateSettings({
+                    theme: isLight ? 'dark' : 'light',
+                  });
+                  setMobileMenuOpen(false);
+                }}
+              />
               <MenuAction icon={Settings} label="设置" onClick={() => openMenu('settings')} />
               <MenuAction icon={CircleHelp} label="帮助" onClick={() => openMenu('help')} />
               <MenuAction icon={Keyboard} label="快捷键" onClick={() => openMenu('help')} />

@@ -1,6 +1,6 @@
 import type { ImageAsset } from '../types/studio';
 import { downloadBlob, safeFilename } from './format';
-import { deliverFile, type FileDelivery } from './files';
+import { saveImageToGallery, type FileDelivery } from './files';
 
 const MAX_UPLOAD_BYTES = 14 * 1024 * 1024;
 const MAX_EDGE = 1600;
@@ -376,18 +376,18 @@ export async function downloadImage(asset: ImageAsset, filename: string, format:
       canvas.toBlob(resolve, mime, format === 'png' ? undefined : 0.94),
     );
     if (!blob) throw new Error('image encoding failed');
-    return await deliverFile(blob, name);
+    return await saveImageToGallery(blob, name, mime);
   } catch {
     try {
       if (asset.src.startsWith('data:')) {
         const response = await fetch(asset.src);
         const blob = await response.blob();
-        return await deliverFile(blob, name);
+        return await saveImageToGallery(blob, name, mime);
       }
       const response = await fetch(asset.src, { mode: 'cors' });
       if (!response.ok) throw new Error('download failed');
       const blob = await response.blob();
-      return await deliverFile(blob, name);
+      return await saveImageToGallery(blob, name, mime);
     } catch {
       window.open(asset.src, '_blank', 'noopener,noreferrer');
       return null;

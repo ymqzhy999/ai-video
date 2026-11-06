@@ -57,6 +57,16 @@ const LESSONS = [
     title: '配置 Key 尝试真实生成',
     description: '在设置里填写 Agnes 与 DeepSeek Key。学习阶段不配置也完全不影响使用。',
   },
+  {
+    id: 'node-guide',
+    title: '长按节点看工作机制',
+    description: '长按画布上的任意节点，或点节点库右侧的书本图标，查看端口、机制和连接示例。',
+  },
+  {
+    id: 'video-nodes',
+    title: '认识视频链路',
+    description: '打开「首帧到视频 / Wan I2V」示例，观察首帧、Wan 图生视频、视频合成和视频输出如何连接。',
+  },
 ];
 
 function loadProgress(): string[] {
